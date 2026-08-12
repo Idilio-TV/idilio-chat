@@ -229,13 +229,42 @@ def attach_to_base_model(
     re-run alongside other things attached to the same model by hand."""
     resp = session.get(f'{base_url}/api/v1/models/model?id={base_model_id}')
     if not resp.ok:
-        raise RuntimeError(
-            f"base model '{base_model_id}' not found in OpenWebUI's model list "
-            f'({resp.status_code}) -- it must exist as a model (even with no '
-            'params.system override) before you can attach tools/knowledge/skills '
-            'to it. Pick a model from Admin Settings -> Models, or create a '
-            'zero-config entry for it first.'
+        # No persisted Model row yet for this id -- distinct from whether the
+        # connection can actually serve it (that's /api/models, the live
+        # upstream list; this is the separate DB table a Model's own
+        # meta/params/tool attachments live on). Create a bare entry rather
+        # than requiring an admin to click through Settings -> Models first.
+        live_models = session.get(f'{base_url}/api/models')
+        live_ids = {m['id'] for m in live_models.json().get('data', [])} if live_models.ok else set()
+        if base_model_id not in live_ids:
+            raise RuntimeError(
+                f"base model '{base_model_id}' isn't offered by any configured "
+                f'connection ({len(live_ids)} models available) -- check the '
+                'connection/API key before seeding.'
+            )
+        create_resp = session.post(
+            f'{base_url}/api/v1/models/create',
+            json={
+                'id': base_model_id,
+                'base_model_id': None,
+                'name': base_model_id,
+                'meta': {},
+                'params': {},
+                'access_grants': [],
+            },
         )
+        if not create_resp.ok:
+            raise RuntimeError(
+                f'failed to create model entry for {base_model_id}: '
+                f'{create_resp.status_code} {create_resp.text}'
+            )
+        print(f'created model entry: {base_model_id}')
+        resp = session.get(f'{base_url}/api/v1/models/model?id={base_model_id}')
+        if not resp.ok:
+            raise RuntimeError(
+                f"created model entry for '{base_model_id}' but couldn't read it back "
+                f'({resp.status_code}) -- something is wrong beyond a missing entry.'
+            )
     model = resp.json()
     meta = model.get('meta') or {}
 
