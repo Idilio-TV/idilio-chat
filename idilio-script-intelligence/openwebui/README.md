@@ -69,20 +69,26 @@ following the real script rather than improvising from the one-line
 description); an unrelated question ("cual es la capital de francia?")
 gets answered directly with no melodrama tangent.
 
-## Optional companion: interactive question UI
+## Interactive question UI (install this before using the skill)
 
-`system_prompt.md`'s "una pregunta a la vez" flow works as plain text by
-default. For a real clickable UI (single-select, multi-select, drag-to-rank)
-instead, install the community tool **"Claude-like Ask User Question"** by
-Marios Adamidis:
+`system_prompt.md` asks every question through `ask_user_question()` —
+clickable options (single-select, multi-select, drag-to-rank), always with
+a free-text field so the writer can type their own answer instead of
+picking a button. Without it, the skill's questions silently fall back to
+plain text — that's not a redesign, just what happens when the tool call
+isn't available. `seed.py` checks for it and attaches it automatically if
+present, but **can't install it for you** — it's third-party code, not
+vendored in this repo. Install it yourself first:
+
+**"Claude-like Ask User Question"** by Marios Adamidis:
 <https://openwebui.com/posts/claude_like_ask_user_question_6d0a6a9b>
-(Admin Settings → Tools → Import from Link). Not vendored in this repo —
-it's third-party code, install it yourself after reviewing it. Reviewed by
-hand before installing on the local dev instance during this build: pure
-Python, no network/subprocess/eval calls, renders via OpenWebUI's standard
-`execute` event channel. Once installed, it exposes `ask_user_question()`
-as a tool the assistant can call for any of this prompt's one-at-a-time
-questions.
+(Admin Settings → Tools → Import from Link). Reviewed by hand before
+installing it on the local dev instance during this build: pure Python, no
+network/subprocess/eval calls, renders via OpenWebUI's standard `execute`
+event channel.
+
+If `seed.py` prints a warning that it's not installed, install it and
+re-run `seed.py` — it'll pick it up and attach it on the next pass.
 
 ## Two things this port does natively that the other two platforms can't
 

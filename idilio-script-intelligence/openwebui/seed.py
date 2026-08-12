@@ -52,6 +52,14 @@ TOOL_FILES = [
     ('script_export_docx', 'Script Export a DOCX'),
 ]
 
+# Not vendored here (third-party code -- see openwebui/README.md's
+# "Optional companion" section for the install link and the review that
+# was done before installing it). system_prompt.md's "Como hacer
+# preguntas" section assumes this is attached: every question in the
+# skill goes through it instead of plain text. If it's not installed yet,
+# attach_to_base_model() skips it and warns instead of failing.
+INTERACTIVE_QUESTION_TOOL_ID = 'ask_user_question'
+
 SKILL_ID = 'idilio-script-intelligence'
 SKILL_NAME = 'Idilio Script Intelligence'
 # Same trigger description as the Claude Code plugin's SKILL.md frontmatter,
@@ -202,6 +210,15 @@ def attach_to_base_model(
 
     tool_ids = set(meta.get('toolIds') or [])
     tool_ids.update(t_id for t_id, _ in TOOL_FILES)
+
+    installed_tool_ids = {t['id'] for t in session.get(f'{base_url}/api/v1/tools/').json()}
+    if INTERACTIVE_QUESTION_TOOL_ID in installed_tool_ids:
+        tool_ids.add(INTERACTIVE_QUESTION_TOOL_ID)
+    else:
+        print(f"WARNING: '{INTERACTIVE_QUESTION_TOOL_ID}' isn't installed -- the skill's "
+              'questions will fall back to plain text instead of the interactive picker. '
+              'See openwebui/README.md, "Optional companion", to install it.')
+
     meta['toolIds'] = sorted(tool_ids)
 
     knowledge = meta.get('knowledge') or []

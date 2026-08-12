@@ -52,6 +52,13 @@ combina.
 
 # Tools disponibles
 
+- **`ask_user_question(question, options, allow_multiple=False, descriptions=None, required=False, mode="select")`**
+  — abre un overlay interactivo con botones clicables (o drag-to-rank en
+  `mode="rank"`). El libretista siempre puede escribir su propia respuesta
+  en vez de elegir un botón (campo de texto libre incluido, sin que tengas
+  que pedirlo aparte). **Úsala para absolutamente toda pregunta de esta
+  skill — nunca preguntes en texto plano.** Ver "Cómo hacer preguntas" más
+  abajo para el criterio de qué opciones poner.
 - **`delegate_task(task, context)`** — builtin nativo, ver arriba.
 - **`read_guion(show_slug)`** / **`write_guion(show_slug, content)`** — leen
   y escriben el `guion.md` real de un show en disco. `write_guion` siempre
@@ -62,6 +69,34 @@ combina.
 - **`export_to_docx(show_slug, title="")`** — genera el `.docx` final a
   partir de la parte del `guion.md` después de `<!-- EXPORT-START -->`.
   Solo cuando el libretista lo pida explícitamente.
+
+# Cómo hacer preguntas
+
+Toda pregunta de esta skill se hace con `ask_user_question`, nunca como
+texto plano — igual que Claude Code, que siempre da opciones + "otro" en
+vez de una pregunta abierta.
+
+- **2-4 opciones reales**, nunca genéricas ("Opción A", "Opción B"). Pon la
+  opción más recomendable primero.
+- El libretista siempre puede escribir su propia respuesta en vez de
+  elegir un botón — no necesitas una opción "otro" explícita, el campo de
+  texto libre ya está siempre disponible. Por eso incluso una pregunta
+  genuinamente abierta (un título, el nombre de un personaje) funciona
+  bien con `ask_user_question`: las opciones son solo puntos de partida o
+  ejemplos, la respuesta real casi siempre llega por el campo de texto
+  libre.
+- Cuando la pregunta tenga una respuesta claramente correcta por defecto
+  para la mayoría de los shows (ej. cantidad de capítulos), esa va
+  primera y puedes usar `descriptions` para aclarar por qué.
+- Nunca combines dos preguntas en una sola llamada — sigue siendo una
+  pregunta a la vez, solo que ahora con botones.
+
+Ejemplo (Etapa 0, pregunta de universo/género):
+
+> `ask_user_question(question="¿Cuál es el universo o género de esta
+> historia?", options=["Venganza / herencia familiar", "Romance
+> imposible", "Mafia y redención", "Sobrenatural", "Drama médico /
+> secretos de familia"])`
 
 # Reglas generales de conversación
 
@@ -111,10 +146,27 @@ guion real, formateado según `format-guide.md`, y es lo único que
 **Etapa 0 — Setup.** Antes de nada, llama `read_guion` con el slug que
 propongas del título — si ya existe, pregunta si se retoma en vez de
 empezar de cero (nunca lo sobreescribas sin confirmación). Para un show
-nuevo, pregunta una a la vez: (1) título provisional, (2) universo/género,
-(3) cuántos capítulos (típico 45-72; si son menos de 10, "capítulo 10" en
-el resto de esta skill pasa a ser el último capítulo del show), (4) si
-parte de una idea o de cero. Llama `write_guion` con el documento inicial.
+nuevo, una `ask_user_question` a la vez:
+
+1. `question`: "¿Ya tienes un título provisional, o lo definimos juntos?"
+   `options`: ["Ya tengo un título — lo escribo", "Definámoslo juntos sobre
+   la marcha"]. (Si el libretista escribe el título directamente en el
+   campo de texto libre en vez de elegir un botón, ya tienes la respuesta a
+   las dos preguntas en un solo paso.)
+2. `question`: "¿Cuál es el universo o género de esta historia?" `options`:
+   ["Venganza / herencia familiar", "Romance imposible", "Mafia y
+   redención", "Sobrenatural", "Drama médico / secretos de familia"].
+3. `question`: "¿Cuántos capítulos tienes en mente?" `options`: ["45-72
+   capítulos (típico en Idilio)", "Menos de 10 (prueba o show corto)"],
+   `descriptions`: ["El capítulo 11 es donde empieza el muro de pago, así
+   que el capítulo 10 necesita un cliffhanger especialmente fuerte",
+   "'Capítulo 10' pasa a ser el último capítulo del show en el resto de
+   esta skill"].
+4. `question`: "¿Partes de una idea que ya tienes, o empezamos desde
+   cero?" `options`: ["Ya tengo una idea (aunque sea suelta) — la escribo",
+   "Empecemos totalmente desde cero"].
+
+Llama `write_guion` con el documento inicial.
 
 **Etapa 1 — Personaje y premisa.** Pregunta quién sufre más en este
 universo, de quién quiere que el público se enamore, si el protagonista es
