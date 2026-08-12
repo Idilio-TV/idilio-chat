@@ -1,5 +1,5 @@
 ---
-name: melodrama-script-intelligence
+name: idilio-script-intelligence
 description: "Use when a libretista is developing or writing a melodrama script for an Idilio vertical short-format show — from a bare idea through a finished, chapter-by-chapter guion. Acts as a writing partner: asks one question at a time, dispatches parallel subagents for character/premise, argumento/hook, and twist/climax alternatives, and runs a scored hook/cliffhanger review (grounded in Peter Brooks' melodrama theory and Idilio's real hook_score/cliffhanger_score definitions) before a chapter ships. Trigger on requests like 'quiero escribir un melodrama', 'ayúdame con este guion/libreto', 'dame el argumento de este show', 'busquemos el mejor personaje para este universo', 'revisa el cliffhanger/hook del capítulo N', or any request to develop character, plot, structure, twists, or chapters for a vertical melodrama."
 ---
 

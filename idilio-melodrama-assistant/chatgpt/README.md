@@ -1,6 +1,6 @@
 # Melodrama Script Intelligence — ChatGPT Custom GPT
 
-Adapted from the Claude Code skill at `../claude-plugin/skills/melodrama-script-intelligence/`.
+Adapted from the Claude Code skill at `../claude-plugin/skills/idilio-script-intelligence/`.
 GPT creation itself is a manual step in the ChatGPT UI — there's no API for
 it — so this bundle just gives you the exact content to paste in.
 
@@ -40,7 +40,7 @@ it — so this bundle just gives you the exact content to paste in.
 
 ## Keeping this in sync
 
-If the underlying skill (`../claude-plugin/skills/melodrama-script-intelligence/`)
+If the underlying skill (`../claude-plugin/skills/idilio-script-intelligence/`)
 changes — new stages, an updated hook/cliffhanger rubric, etc. — the 3
 reference files here (everything except `instructions.md`) are meant to be
 byte-identical copies of that skill's `reference/*.md` (and the review

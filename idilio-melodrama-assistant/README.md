@@ -14,7 +14,7 @@ packages that same content for three platforms:
 | OpenWebUI | [`openwebui/`](openwebui/) | Real (native `delegate_task`, `asyncio.gather`-parallel) | `guion.md` file on the server | Live-rendered HTML Artifact |
 | ChatGPT | [`chatgpt/`](chatgpt/) | Simulated (model generates 2-3 alternatives itself, sequentially, in one turn) | None — chat re-displays the doc for the writer to copy/save | Formatted text (or a downloadable file, if Code Interpreter is on) |
 
-`claude-plugin/skills/melodrama-script-intelligence/reference/` is the
+`claude-plugin/skills/idilio-script-intelligence/reference/` is the
 canonical source for the shared reference content (Brooks theory, 12-step
 structure, format guide + hook/cliffhanger rubric). `chatgpt/knowledge/`
 and `openwebui/knowledge/` are synced copies — run
@@ -25,7 +25,7 @@ and `openwebui/knowledge/` are synced copies — run
 
 - **Claude Code**: `claude-plugin/` is a real Claude Code plugin. Add this
   repo as a marketplace (`.claude-plugin/marketplace.json` lives at the
-  repo root) and install the `melodrama-script-intelligence` plugin.
+  repo root) and install the `idilio-script-intelligence` plugin.
 - **OpenWebUI**: see [`openwebui/README.md`](openwebui/README.md).
 - **ChatGPT**: see [`chatgpt/README.md`](chatgpt/README.md).
 

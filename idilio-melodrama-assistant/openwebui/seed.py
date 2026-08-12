@@ -1,4 +1,4 @@
-"""Registers the melodrama-script-intelligence Tools and Knowledge files
+"""Registers the idilio-script-intelligence Tools and Knowledge files
 against a running OpenWebUI instance via its REST API.
 
 Idempotent-ish: re-running updates existing tools/knowledge by name rather

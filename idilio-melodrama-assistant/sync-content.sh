@@ -3,12 +3,12 @@
 # truth) into the chatgpt/ and openwebui/ knowledge folders, so all three
 # platform packages stay byte-identical on the shared material instead of
 # drifting via hand-edited copies. Run this after editing anything under
-# claude-plugin/skills/melodrama-script-intelligence/reference/.
+# claude-plugin/skills/idilio-script-intelligence/reference/.
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-SRC="claude-plugin/skills/melodrama-script-intelligence/reference"
+SRC="claude-plugin/skills/idilio-script-intelligence/reference"
 
 # ChatGPT gets everything, including the HTML template (Code Interpreter
 # can fill it in and hand back a real downloadable file).

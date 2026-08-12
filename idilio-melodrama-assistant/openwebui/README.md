@@ -1,4 +1,4 @@
-# Melodrama Script Intelligence — OpenWebUI
+# Idilio Script Intelligence — OpenWebUI
 
 The most faithful port of the three platforms in this directory — unlike
 the Claude Code plugin (via the `Agent` tool) and the ChatGPT bundle (no
@@ -29,6 +29,21 @@ sub-agents and real file persistence**, running on this server.
 4. If `seed.py` warned that subagents are off: **Admin Settings →
    Subagents → Enable Subagents.** (On a fresh instance this defaults to
    off; enable once, server-wide.)
+
+## Optional companion: interactive question UI
+
+`system_prompt.md`'s "una pregunta a la vez" flow works as plain text by
+default. For a real clickable UI (single-select, multi-select, drag-to-rank)
+instead, install the community tool **"Claude-like Ask User Question"** by
+Marios Adamidis:
+<https://openwebui.com/posts/claude_like_ask_user_question_6d0a6a9b>
+(Admin Settings → Tools → Import from Link). Not vendored in this repo —
+it's third-party code, install it yourself after reviewing it. Reviewed by
+hand before installing on the local dev instance during this build: pure
+Python, no network/subprocess/eval calls, renders via OpenWebUI's standard
+`execute` event channel. Once installed, it exposes `ask_user_question()`
+as a tool the assistant can call for any of this prompt's one-at-a-time
+questions.
 
 ## Two things this port does natively that the other two platforms can't
 
