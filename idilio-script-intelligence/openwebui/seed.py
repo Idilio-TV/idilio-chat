@@ -157,15 +157,21 @@ def seed_knowledge_files(session: requests.Session, base_url: str, knowledge_id:
             raise RuntimeError(f'failed to upload {path.name}: {upload.status_code} {upload.text}')
         file_id = upload.json()['id']
 
-        # There's a race in OpenWebUI itself between the upload finishing
-        # (returning a file_id) and the file actually being flushed to
-        # disk -- calling /file/add immediately after upload can read it
-        # before that write completes and get a spurious "content
-        # provided is empty" 400, even though the same file extracts
-        # perfectly a moment later (confirmed against a real deploy: the
-        # exact same content, same loader call, succeeds when retried
-        # seconds after upload). Retry a few times with backoff rather
-        # than failing the whole seed on a transient timing issue.
+        # OpenWebUI's /file/add response is unreliable here: there's a race
+        # between upload finishing and the file being flushed to disk, so
+        # an immediate attach can get a spurious "content provided is
+        # empty" 400 -- but the background embedding job it kicked off
+        # keeps running and can still complete successfully seconds later
+        # (confirmed against a real deploy: same file, same loader call,
+        # extracts perfectly when re-run manually right after). Sometimes
+        # that background completion then makes the NEXT attempt 400 with
+        # "Duplicate content detected" instead, because the content is
+        # already indexed under this file_id -- also not a real failure.
+        # Rather than trust the HTTP response, check the knowledge
+        # collection's actual file list after each attempt and treat
+        # presence there as ground truth.
+        RACE_MARKERS = ('content provided is empty', 'duplicate content detected')
+        attached = False
         last_error = None
         for attempt in range(1, 4):
             attach = session.post(
@@ -173,14 +179,22 @@ def seed_knowledge_files(session: requests.Session, base_url: str, knowledge_id:
                 json={'file_id': file_id},
             )
             if attach.ok:
+                attached = True
+                break
+
+            last_error = f'{attach.status_code} {attach.text}'
+            if not any(marker in attach.text.lower() for marker in RACE_MARKERS):
+                break  # a different failure -- don't mask it with retries
+
+            time.sleep(attempt * 2)
+            current = session.get(f'{base_url}/api/v1/knowledge/{knowledge_id}/files').json()['items']
+            if any(f['filename'] == path.name for f in current):
+                attached = True
                 last_error = None
                 break
-            last_error = f'{attach.status_code} {attach.text}'
-            if 'content provided is empty' not in attach.text.lower():
-                break  # a different failure -- don't mask it with retries
-            print(f'  attach attempt {attempt}/3 hit the empty-content race, retrying...')
-            time.sleep(attempt * 2)
-        if last_error:
+            print(f'  attach attempt {attempt}/3 hit a known OpenWebUI race, retrying...')
+
+        if not attached:
             raise RuntimeError(f'failed to attach {path.name} to knowledge: {last_error}')
         print(f'uploaded + attached: {path.name}')
 
