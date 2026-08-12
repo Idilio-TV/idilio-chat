@@ -1,13 +1,26 @@
-"""Registers the idilio-script-intelligence Tools and Knowledge files
-against a running OpenWebUI instance via its REST API.
+"""Registers idilio-script-intelligence -- as a native OpenWebUI Skill, plus
+its Tools and Knowledge files -- against a running OpenWebUI instance via
+its REST API, and attaches all three directly to a base model (default:
+gpt-5.6-luna).
 
-Idempotent-ish: re-running updates existing tools/knowledge by name rather
+Deliberately does NOT create a separate selectable model preset. The point
+of using OpenWebUI's Skill object (its own DB table + the `view_skill`
+builtin + the <available_skills> manifest OpenWebUI injects per-model,
+verified in backend/open_webui/utils/middleware.py) is that a skill loads
+contextually -- like a Claude Code skill -- instead of being an always-on
+system prompt you have to pick a special model to get. Attaching it to
+gpt-5.6-luna's own meta.skillIds means: select gpt-5.6-luna like normal,
+and the skill becomes available whenever its description matches what
+you're asking for.
+
+Idempotent-ish: re-running updates existing tools/knowledge/skill rather
 than erroring on "already exists", so this is safe to re-run after editing
-a Tool file.
+a Tool file or system_prompt.md.
 
 Usage:
     python seed.py --base-url http://localhost:8080 \
-        --email admin@idilio.tv --password '...'
+        --email admin@idilio.tv --password '...' \
+        --base-model-id gpt-5.6-luna
 
 If the instance has no users yet, the given email/password signs up as the
 first user (which OpenWebUI makes an admin automatically). If a user with
@@ -38,6 +51,28 @@ TOOL_FILES = [
     ('script_guion', 'Script Guion'),
     ('script_export_docx', 'Script Export a DOCX'),
 ]
+
+SKILL_ID = 'idilio-script-intelligence'
+SKILL_NAME = 'Idilio Script Intelligence'
+# Same trigger description as the Claude Code plugin's SKILL.md frontmatter,
+# kept in sync by hand -- this is what OpenWebUI shows the model in the
+# lightweight <available_skills> manifest to decide whether to load the
+# full content via view_skill().
+SKILL_DESCRIPTION = (
+    "Use when a libretista is developing or writing a melodrama script for "
+    "an Idilio vertical short-format show -- from a bare idea through a "
+    "finished, chapter-by-chapter guion. Acts as a writing partner: asks "
+    "one question at a time, dispatches parallel sub-agents for "
+    "character/premise, argumento/hook, and twist/climax alternatives, and "
+    "runs a scored hook/cliffhanger review (grounded in Peter Brooks' "
+    "melodrama theory and Idilio's real hook_score/cliffhanger_score "
+    "definitions) before a chapter ships. Trigger on requests like 'quiero "
+    "escribir un melodrama', 'ayudame con este guion/libreto', 'dame el "
+    "argumento de este show', 'busquemos el mejor personaje para este "
+    "universo', 'revisa el cliffhanger/hook del capitulo N', or any request "
+    "to develop character, plot, structure, twists, or chapters for a "
+    "vertical melodrama."
+)
 
 
 def authenticate(session: requests.Session, base_url: str, email: str, password: str) -> None:
@@ -125,6 +160,74 @@ def seed_knowledge_files(session: requests.Session, base_url: str, knowledge_id:
         print(f'uploaded + attached: {path.name}')
 
 
+def seed_skill(session: requests.Session, base_url: str) -> None:
+    content = (HERE / 'system_prompt.md').read_text(encoding='utf-8')
+    payload = {
+        'id': SKILL_ID,
+        'name': SKILL_NAME,
+        'description': SKILL_DESCRIPTION,
+        'content': content,
+        'is_active': True,
+    }
+    existing = session.get(f'{base_url}/api/v1/skills/id/{SKILL_ID}')
+    if existing.ok:
+        resp = session.post(f'{base_url}/api/v1/skills/id/{SKILL_ID}/update', json=payload)
+        action = 'updated'
+    else:
+        resp = session.post(f'{base_url}/api/v1/skills/create', json=payload)
+        action = 'created'
+    if not resp.ok:
+        raise RuntimeError(f'failed to {action[:-1]} skill {SKILL_ID}: {resp.status_code} {resp.text}')
+    print(f'{action} skill: {SKILL_ID}')
+
+
+def attach_to_base_model(
+    session: requests.Session, base_url: str, base_model_id: str, knowledge_id: str
+) -> None:
+    """Attach the 2 tools, the knowledge collection, and the skill directly
+    to base_model_id's own meta -- no separate model preset. Merges into
+    whatever's already there instead of overwriting, so this is safe to
+    re-run alongside other things attached to the same model by hand."""
+    resp = session.get(f'{base_url}/api/v1/models/model?id={base_model_id}')
+    if not resp.ok:
+        raise RuntimeError(
+            f"base model '{base_model_id}' not found in OpenWebUI's model list "
+            f'({resp.status_code}) -- it must exist as a model (even with no '
+            'params.system override) before you can attach tools/knowledge/skills '
+            'to it. Pick a model from Admin Settings -> Models, or create a '
+            'zero-config entry for it first.'
+        )
+    model = resp.json()
+    meta = model.get('meta') or {}
+
+    tool_ids = set(meta.get('toolIds') or [])
+    tool_ids.update(t_id for t_id, _ in TOOL_FILES)
+    meta['toolIds'] = sorted(tool_ids)
+
+    knowledge = meta.get('knowledge') or []
+    if not any(k.get('id') == knowledge_id for k in knowledge):
+        knowledge.append({'id': knowledge_id, 'name': KNOWLEDGE_NAME, 'type': 'collection'})
+    meta['knowledge'] = knowledge
+
+    skill_ids = set(meta.get('skillIds') or [])
+    skill_ids.add(SKILL_ID)
+    meta['skillIds'] = sorted(skill_ids)
+
+    payload = {
+        'id': model['id'],
+        'base_model_id': model.get('base_model_id'),
+        'name': model['name'],
+        'meta': meta,
+        'params': model.get('params') or {},
+        'access_grants': model.get('access_grants') or [],
+    }
+    r = session.post(f'{base_url}/api/v1/models/model/update', json=payload)
+    if not r.ok:
+        raise RuntimeError(f'failed to update base model {base_model_id}: {r.status_code} {r.text}')
+    print(f'attached to {base_model_id}: toolIds={meta["toolIds"]}, '
+          f'knowledge={[k["name"] for k in meta["knowledge"]]}, skillIds={meta["skillIds"]}')
+
+
 def check_subagents_enabled(session: requests.Session, base_url: str) -> None:
     # Parallel alternatives (Etapa 1/2/5/6) rely on OpenWebUI's builtin
     # delegate_task -- the middleware runs multiple delegate_task calls in
@@ -152,6 +255,12 @@ def main() -> int:
     parser.add_argument('--base-url', default='http://localhost:8080')
     parser.add_argument('--email', required=True)
     parser.add_argument('--password', required=True)
+    parser.add_argument(
+        '--base-model-id',
+        default='gpt-5.6-luna',
+        help='Existing model to attach the skill/tools/knowledge to directly '
+        '(no separate selectable model gets created).',
+    )
     args = parser.parse_args()
 
     base_url = args.base_url.rstrip('/')
@@ -162,12 +271,12 @@ def main() -> int:
     seed_tools(session, base_url)
     knowledge_id = get_or_create_knowledge(session, base_url)
     seed_knowledge_files(session, base_url, knowledge_id)
+    seed_skill(session, base_url)
+    attach_to_base_model(session, base_url, args.base_model_id, knowledge_id)
 
-    print('\nDone. In the OpenWebUI admin UI:')
-    print('1. Workspace -> Models -> create a model preset.')
-    print(f'2. Paste {HERE / "system_prompt.md"} as its System Prompt.')
-    print('3. Attach the 2 script_* tools and the "Idilio Script')
-    print('   Intelligence" knowledge collection to that model.')
+    print(f'\nDone. Select "{args.base_model_id}" like any other model in the '
+          'chat UI -- the skill loads contextually when what you ask for '
+          'matches its description, no separate model to pick.')
     return 0
 
 

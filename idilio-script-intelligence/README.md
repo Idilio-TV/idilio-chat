@@ -8,11 +8,11 @@ guion — grounded in Peter Brooks' melodrama theory and Idilio's real
 Originally built as a Claude Code skill in `idilio-marts`. This directory
 packages that same content for three platforms:
 
-| Platform | Directory | Parallel alternatives | Persistence | Review output |
-|---|---|---|---|---|
-| Claude Code | [`claude-plugin/`](claude-plugin/) | Real (`Agent` tool, 3 calls in one message) | `guion.md` file, wherever Claude Code runs | Static HTML file, copy-to-clipboard |
-| OpenWebUI | [`openwebui/`](openwebui/) | Real (native `delegate_task`, `asyncio.gather`-parallel) | `guion.md` file on the server | Live-rendered HTML Artifact |
-| ChatGPT | [`chatgpt/`](chatgpt/) | Simulated (model generates 2-3 alternatives itself, sequentially, in one turn) | None — chat re-displays the doc for the writer to copy/save | Formatted text (or a downloadable file, if Code Interpreter is on) |
+| Platform | Directory | Invocation | Parallel alternatives | Persistence | Review output |
+|---|---|---|---|---|---|
+| Claude Code | [`claude-plugin/`](claude-plugin/) | Skill, loads contextually (Claude decides based on `SKILL.md`'s `description`) | Real (`Agent` tool, 3 calls in one message) | `guion.md` file, wherever Claude Code runs | Static HTML file, copy-to-clipboard |
+| OpenWebUI | [`openwebui/`](openwebui/) | Native OpenWebUI Skill attached to an existing model (e.g. `gpt-5.6-luna`) — loads contextually, nothing separate to select | Real (native `delegate_task`, `asyncio.gather`-parallel) | `guion.md` file on the server | Live-rendered HTML Artifact |
+| ChatGPT | [`chatgpt/`](chatgpt/) | A dedicated Custom GPT you select explicitly | Simulated (model generates 2-3 alternatives itself, sequentially, in one turn) | None — chat re-displays the doc for the writer to copy/save | Formatted text (or a downloadable file, if Code Interpreter is on) |
 
 `claude-plugin/skills/idilio-script-intelligence/reference/` is the
 canonical source for the shared reference content (Brooks theory, 12-step
