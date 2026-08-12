@@ -23,6 +23,10 @@ services:
     environment:
       - 'OLLAMA_BASE_URL=http://ollama:11434'
       - 'WEBUI_SECRET_KEY='
+      - 'WEBUI_NAME=Idilio Chat'
+      - 'ENABLE_GOOGLE_DRIVE_INTEGRATION=${ENABLE_GOOGLE_DRIVE_INTEGRATION-False}'
+      - 'GOOGLE_DRIVE_CLIENT_ID=${GOOGLE_DRIVE_CLIENT_ID-}'
+      - 'GOOGLE_DRIVE_API_KEY=${GOOGLE_DRIVE_API_KEY-}'
     extra_hosts:
       - host.docker.internal:host-gateway
     restart: unless-stopped
