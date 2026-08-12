@@ -1,7 +1,11 @@
-"""Registers idilio-script-intelligence -- as a native OpenWebUI Skill, plus
-its Tools and Knowledge files -- against a running OpenWebUI instance via
-its REST API, and attaches all three directly to a base model (default:
-gpt-5.6-luna).
+"""Bootstraps idilio-script-intelligence against a running OpenWebUI
+instance via its REST API: registers the Skill, Tools, and Knowledge
+files, attaches all three to a base model (default: gpt-5.6-luna), and
+applies the two admin-panel settings this setup depends on
+(ENABLE_SUBAGENTS, and the OpenAI connection's Responses API switch) --
+everything needed to go from a fresh instance to a working assistant in
+one run, except secrets (OPENAI_API_KEY etc., which live in .env / the
+connection's own config, never in this script or the repo).
 
 Deliberately does NOT create a separate selectable model preset. The point
 of using OpenWebUI's Skill object (its own DB table + the `view_skill`
@@ -13,9 +17,10 @@ gpt-5.6-luna's own meta.skillIds means: select gpt-5.6-luna like normal,
 and the skill becomes available whenever its description matches what
 you're asking for.
 
-Idempotent-ish: re-running updates existing tools/knowledge/skill rather
-than erroring on "already exists", so this is safe to re-run after editing
-a Tool file or SKILL.md.
+Idempotent-ish: re-running updates existing tools/knowledge/skill/settings
+rather than erroring on "already exists" or clobbering unrelated config,
+so this is safe to re-run after editing a Tool file or SKILL.md, or just
+to confirm an instance is fully configured.
 
 Usage:
     python seed.py --base-url http://localhost:8080 \
@@ -228,26 +233,77 @@ def attach_to_base_model(
           f'knowledge={[k["name"] for k in meta["knowledge"]]}, skillIds={meta["skillIds"]}')
 
 
-def check_subagents_enabled(session: requests.Session, base_url: str) -> None:
-    # Parallel alternatives (Etapa 1/2/5/6) rely on OpenWebUI's builtin
-    # delegate_task -- the middleware runs multiple delegate_task calls in
-    # one turn through asyncio.gather (a real parallel fan-out, unlike
-    # every other tool call, which it awaits one at a time). That tool is
-    # only exposed to a chat when ENABLE_SUBAGENTS is on.
+OPENAI_RESPONSES_API_HOST = 'api.openai.com'
+
+
+def ensure_subagents_enabled(session: requests.Session, base_url: str) -> None:
+    """Turn on ENABLE_SUBAGENTS if it's off, so delegate_task (real parallel
+    alternatives via the asyncio.gather fast-path in middleware.py) is
+    actually available -- without this, the model can still call
+    delegate_task, but the fan-out never triggers. The POST endpoint
+    requires the full SubagentsConfigForm, not a partial patch, so this
+    always GETs current values first and only flips the one field, leaving
+    background_enabled/max_concurrent/etc. exactly as an admin set them."""
     resp = session.get(f'{base_url}/api/v1/configs/subagents')
     if not resp.ok:
         print(f'WARNING: could not read subagents config ({resp.status_code}) -- '
-              'skipping the check. Confirm ENABLE_SUBAGENTS manually if alternatives '
+              'skipping. Confirm ENABLE_SUBAGENTS manually if alternatives '
               "don't come back as real parallel calls.")
         return
-    enabled = resp.json().get('ENABLE_SUBAGENTS')
-    if enabled:
+    config = resp.json()
+    if config.get('ENABLE_SUBAGENTS'):
         print('subagents: already enabled (delegate_task available)')
-    else:
-        print('WARNING: ENABLE_SUBAGENTS is off on this instance. The system prompt '
-              'assumes delegate_task is available for parallel alternatives -- enable it '
-              'in Admin Settings -> Subagents, or POST {"ENABLE_SUBAGENTS": true, ...} to '
-              '/api/v1/configs/subagents, before using this assistant.')
+        return
+    config['ENABLE_SUBAGENTS'] = True
+    r = session.post(f'{base_url}/api/v1/configs/subagents', json=config)
+    if not r.ok:
+        raise RuntimeError(f'failed to enable subagents: {r.status_code} {r.text}')
+    print('subagents: enabled ENABLE_SUBAGENTS (was off)')
+
+
+def ensure_responses_api(
+    session: requests.Session, base_url: str, connection_host: str = OPENAI_RESPONSES_API_HOST
+) -> None:
+    """Switch the OpenAI-compatible connection matching connection_host to
+    the Responses API (api_type: "responses") instead of Chat Completions
+    -- required for gpt-5.6-luna/terra to use reasoning_effort and function
+    tools in the same call (Chat Completions rejects that combination for
+    this model family). This is connection-wide: every model routed
+    through that connection picks it up, not just gpt-5.6-luna -- that's
+    an intentional, already-confirmed tradeoff for this shared connection,
+    not something to silently redo per model."""
+    resp = session.get(f'{base_url}/openai/config')
+    if not resp.ok:
+        print(f'WARNING: could not read OpenAI connections config ({resp.status_code}) -- '
+              'skipping. Set api_type to "responses" manually on the '
+              f'{connection_host} connection in Admin Settings -> Connections '
+              'if you see a "Function tools with reasoning_effort are not '
+              'supported" error.')
+        return
+    config = resp.json()
+    base_urls = config.get('OPENAI_API_BASE_URLS') or []
+    idx = next((i for i, url in enumerate(base_urls) if connection_host in url), None)
+    if idx is None:
+        print(f'WARNING: no OpenAI connection matching "{connection_host}" found -- skipping.')
+        return
+
+    api_configs = config.get('OPENAI_API_CONFIGS') or {}
+    conn_config = api_configs.get(str(idx)) or {}
+    if conn_config.get('api_type') == 'responses':
+        print(f'{connection_host} connection: already using the Responses API')
+        return
+
+    conn_config['api_type'] = 'responses'
+    api_configs[str(idx)] = conn_config
+    config['OPENAI_API_CONFIGS'] = api_configs
+
+    r = session.post(f'{base_url}/openai/config/update', json=config)
+    if not r.ok:
+        raise RuntimeError(
+            f'failed to switch {connection_host} to the Responses API: {r.status_code} {r.text}'
+        )
+    print(f'{connection_host} connection: switched to the Responses API '
+          '(affects every model on this connection, not just gpt-5.6-luna)')
 
 
 def main() -> int:
@@ -267,7 +323,8 @@ def main() -> int:
     session = requests.Session()
 
     authenticate(session, base_url, args.email, args.password)
-    check_subagents_enabled(session, base_url)
+    ensure_subagents_enabled(session, base_url)
+    ensure_responses_api(session, base_url)
     seed_tools(session, base_url)
     knowledge_id = get_or_create_knowledge(session, base_url)
     seed_knowledge_files(session, base_url, knowledge_id)
