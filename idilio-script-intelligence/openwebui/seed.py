@@ -89,9 +89,10 @@ def authenticate(session: requests.Session, base_url: str, email: str, password:
         print(f'signed in as {email}')
         return
 
+    display_name = email.split('@', 1)[0].replace('.', ' ').title()
     signup = session.post(
         f'{base_url}/api/v1/auths/signup',
-        json={'name': 'Idilio Seed', 'email': email, 'password': password},
+        json={'name': display_name, 'email': email, 'password': password},
     )
     if not signup.ok:
         raise RuntimeError(
