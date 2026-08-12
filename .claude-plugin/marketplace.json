@@ -1,0 +1,19 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "idilio-script-intelligence",
+  "description": "Idilio's Claude Code plugin marketplace — writing-partner tools for libretistas developing vertical-format melodrama shows.",
+  "owner": {
+    "name": "Idilio"
+  },
+  "plugins": [
+    {
+      "name": "idilio-script-intelligence",
+      "description": "Writing partner for libretistas developing Idilio vertical-format melodrama shows — from a bare idea through a finished, chapter-by-chapter guion, grounded in Peter Brooks' melodrama theory and Idilio's real hook_score/cliffhanger_score definitions.",
+      "author": {
+        "name": "Idilio"
+      },
+      "category": "writing",
+      "source": "./idilio-script-intelligence/claude-plugin"
+    }
+  ]
+}

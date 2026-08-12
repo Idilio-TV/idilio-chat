@@ -505,12 +505,12 @@
 			id="sidebar-chat-item"
 			class=" w-full flex justify-between rounded-xl px-2 py-[6px] {id === $chatId || confirmEdit
 				? ($settings?.highContrastMode ?? false)
-					? 'bg-black/[0.035] dark:bg-white/[0.06] selected'
-					: 'bg-black/[0.035] dark:bg-white/[0.045] selected'
+					? 'bg-blue-600/20 dark:bg-blue-400/20 selected'
+					: 'bg-blue-600/10 dark:bg-blue-400/10 selected'
 				: selected
 					? ($settings?.highContrastMode ?? false)
-						? 'bg-black/[0.035] dark:bg-white/[0.055] selected'
-						: 'bg-black/[0.035] dark:bg-white/[0.045] selected'
+						? 'bg-blue-600/20 dark:bg-blue-400/20 selected'
+						: 'bg-blue-600/10 dark:bg-blue-400/10 selected'
 					: 'hover:bg-gray-50 dark:hover:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-gray-900'}  whitespace-nowrap text-ellipsis relative transition {generating
 				? 'cursor-not-allowed'
 				: ''}"
@@ -550,12 +550,12 @@
 				id="sidebar-chat-item"
 				class=" w-full flex justify-between rounded-xl px-2 py-[6px] {id === $chatId || confirmEdit
 					? ($settings?.highContrastMode ?? false)
-						? 'bg-black/[0.035] dark:bg-white/[0.06] selected'
-						: 'bg-black/[0.035] dark:bg-white/[0.045] selected'
+						? 'bg-blue-600/20 dark:bg-blue-400/20 selected'
+						: 'bg-blue-600/10 dark:bg-blue-400/10 selected'
 					: selected
 						? ($settings?.highContrastMode ?? false)
-							? 'bg-black/[0.035] dark:bg-white/[0.055] selected'
-							: 'bg-black/[0.035] dark:bg-white/[0.045] selected'
+							? 'bg-blue-600/20 dark:bg-blue-400/20 selected'
+							: 'bg-blue-600/10 dark:bg-blue-400/10 selected'
 						: ' hover:bg-gray-50 dark:hover:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-gray-900'}  whitespace-nowrap text-ellipsis transition"
 				href="/c/{id}"
 				aria-current={id === $chatId ? 'page' : undefined}
