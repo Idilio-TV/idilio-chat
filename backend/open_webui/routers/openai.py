@@ -327,7 +327,7 @@ async def get_anthropic_token_count_target(request: Request, form_data: dict, us
 
     model = models.get(model_id)
     if not model or 'urlIdx' not in model:
-        raise HTTPException(status_code=404, detail=ERROR_MESSAGES.MODEL_NOT_FOUND())
+        raise HTTPException(status_code=404, detail=ERROR_MESSAGES.MODEL_NOT_FOUND(model_id))
 
     url, key, api_config = await get_openai_connection(model['urlIdx'])
     prefix_id = api_config.get('prefix_id')
@@ -1243,7 +1243,7 @@ async def generate_chat_completion(
     else:
         raise HTTPException(
             status_code=404,
-            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(),
+            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(model_id),
         )
 
     url, key, api_config = await get_openai_connection(idx)

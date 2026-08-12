@@ -132,7 +132,7 @@ async def generate_title(request: Request, form_data: dict, user=Depends(get_ver
     if model_id not in models:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(),
+            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(model_id),
         )
 
     # Check if the user has a custom task model
@@ -211,7 +211,7 @@ async def generate_follow_ups(request: Request, form_data: dict, user=Depends(ge
     if model_id not in models:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(),
+            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(model_id),
         )
 
     # Check if the user has a custom task model
@@ -281,7 +281,7 @@ async def generate_chat_tags(request: Request, form_data: dict, user=Depends(get
     if model_id not in models:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(),
+            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(model_id),
         )
 
     # Check if the user has a custom task model
@@ -345,7 +345,7 @@ async def generate_image_prompt(request: Request, form_data: dict, user=Depends(
     if model_id not in models:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(),
+            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(model_id),
         )
 
     # Check if the user has a custom task model
@@ -427,7 +427,7 @@ async def generate_queries(request: Request, form_data: dict, user=Depends(get_v
     if model_id not in models:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(),
+            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(model_id),
         )
 
     # Check if the user has a custom task model
@@ -508,7 +508,7 @@ async def generate_autocompletion(request: Request, form_data: dict, user=Depend
     if model_id not in models:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(),
+            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(model_id),
         )
 
     # Check if the user has a custom task model
@@ -572,7 +572,7 @@ async def generate_emoji(request: Request, form_data: dict, user=Depends(get_ver
     if model_id not in models:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(),
+            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(model_id),
         )
 
     # Check if the user has a custom task model
@@ -639,7 +639,7 @@ async def generate_moa_response(request: Request, form_data: dict, user=Depends(
     if model_id not in models:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(),
+            detail=ERROR_MESSAGES.MODEL_NOT_FOUND(model_id),
         )
 
     template = DEFAULT_MOA_GENERATION_PROMPT_TEMPLATE
