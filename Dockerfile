@@ -28,11 +28,14 @@ FROM --platform=$BUILDPLATFORM node:22-alpine3.20 AS build
 ARG BUILD_HASH
 
 # Set Node.js options (heap limit Allocation failed - JavaScript heap out of memory)
-# vite build OOMs under Node's default heap heuristic on constrained build
-# hosts (hit locally on a 4096 MiB Docker VM) -- 3072 leaves headroom for
-# npm/rollup's own non-heap overhead and the OS on a small VM, while still
-# giving the build real room on a larger one.
-ENV NODE_OPTIONS="--max-old-space-size=3072"
+# vite build OOMs under Node's default heap heuristic on most build hosts
+# for this app -- 6144 is sized for a real deploy box (confirmed OOMing at
+# ~3100MB actual usage on a 15GB host with 8.8GB free, so 3072 was too
+# tight even there). Override with --build-arg NODE_BUILD_MAX_OLD_SPACE=N
+# on a genuinely memory-constrained host (e.g. a 4096 MiB local dev VM,
+# where building natively on the host instead is usually easier anyway).
+ARG NODE_BUILD_MAX_OLD_SPACE=6144
+ENV NODE_OPTIONS="--max-old-space-size=${NODE_BUILD_MAX_OLD_SPACE}"
 
 WORKDIR /app
 
