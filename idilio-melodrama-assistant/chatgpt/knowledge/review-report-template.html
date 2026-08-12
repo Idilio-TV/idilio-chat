@@ -1,0 +1,199 @@
+<!--
+  PLANTILLA — al llenar cualquier {{PLACEHOLDER}} con texto real:
+  - Escapa siempre & < > antes de insertarlo (usa &amp; &lt; &gt;), sin
+    excepción — el texto viene de un agente y puede contener comillas,
+    signos de interrogación abiertos, o cualquier carácter.
+  - {{SCORE_CLASS}} debe ser exactamente una de estas tres palabras: good,
+    mid, bad — nunca insertes texto libre ahí.
+  - No agregues ningún atributo tipo data-copy="{{...}}" con texto sin
+    escapar — el botón de copiar ya lee el texto visible con
+    textContent, no necesita un duplicado en un atributo.
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review — {{SHOW_TITLE}} — {{REVIEW_LABEL}}</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #ffffff;
+    --fg: #1a1a1a;
+    --card-bg: #f6f5f3;
+    --border: #ddd8d0;
+    --accent: #8a2e2e;
+    --score-good: #2e7d4f;
+    --score-mid: #b8860b;
+    --score-bad: #b23b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17140f;
+      --fg: #ece7de;
+      --card-bg: #241f18;
+      --border: #3a332a;
+      --accent: #d98f8f;
+      --score-good: #6fd19a;
+      --score-mid: #e0b84a;
+      --score-bad: #e08080;
+    }
+  }
+  body {
+    margin: 0;
+    padding: 2rem 1.25rem;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+  .subtitle { opacity: 0.7; margin-top: 0; margin-bottom: 2rem; }
+  .chapter-block {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    background: var(--card-bg);
+  }
+  .chapter-block h2 { margin-top: 0; font-size: 1.2rem; }
+  .criterion {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 0.75rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .criterion:first-of-type { border-top: none; }
+  .score {
+    flex: 0 0 3rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-align: center;
+  }
+  .score.good { color: var(--score-good); }
+  .score.mid { color: var(--score-mid); }
+  .score.bad { color: var(--score-bad); }
+  .criterion-body { flex: 1; }
+  .criterion-name { font-weight: 600; margin-bottom: 0.15rem; }
+  .justification { opacity: 0.85; margin: 0 0 0.5rem 0; }
+  .suggestion {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+  }
+  .suggestion-text { flex: 1; font-size: 0.92rem; }
+  button.copy-btn {
+    flex: 0 0 auto;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    background: transparent;
+    border-radius: 6px;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  button.copy-btn:hover { background: var(--accent); color: var(--bg); }
+  button.copy-btn.copied { background: var(--score-good); border-color: var(--score-good); color: var(--bg); }
+  button.copy-btn.copy-failed { background: var(--score-bad); border-color: var(--score-bad); color: var(--bg); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Review — {{SHOW_TITLE}}</h1>
+  <p class="subtitle">{{REVIEW_LABEL}} · generado {{DATE}}</p>
+
+  <!-- CHAPTER-BLOCK -->
+  <div class="chapter-block">
+    <h2>Capítulo {{CHAPTER_NUMBER}}</h2>
+
+    <!-- CRITERION-CARD -->
+    <div class="criterion">
+      <div class="score {{SCORE_CLASS}}">{{SCORE}}/10</div>
+      <div class="criterion-body">
+        <div class="criterion-name">{{CRITERION_NAME}}</div>
+        <p class="justification">{{JUSTIFICATION}}</p>
+        <!-- SUGGESTION (omit this block entirely if score >= 8) -->
+        <div class="suggestion">
+          <div class="suggestion-text">{{SUGGESTION_TEXT}}</div>
+          <button type="button" class="copy-btn">Copiar sugerencia</button>
+        </div>
+        <!-- /SUGGESTION -->
+      </div>
+    </div>
+    <!-- /CRITERION-CARD -->
+
+  </div>
+  <!-- /CHAPTER-BLOCK -->
+
+</div>
+<script>
+  function showButtonState(btn, label, cls) {
+    // El label por defecto se guarda una sola vez (en el propio botón) y
+    // el timer anterior se cancela antes de arrancar uno nuevo -- si no,
+    // dos clics rápidos dejan el botón con un label viejo cuando el
+    // primer timer restaura texto que el segundo clic ya sobreescribió.
+    var original = btn.dataset.defaultLabel || btn.textContent;
+    btn.dataset.defaultLabel = original;
+    if (btn._copyStateTimer) clearTimeout(btn._copyStateTimer);
+    btn.classList.remove("copied", "copy-failed");
+    if (cls) btn.classList.add(cls);
+    btn.textContent = label;
+    btn._copyStateTimer = setTimeout(function () {
+      btn.classList.remove("copied", "copy-failed");
+      btn.textContent = original;
+      btn._copyStateTimer = null;
+    }, 1500);
+  }
+
+  function legacyCopy(text, btn) {
+    var hadFocus = document.activeElement === btn;
+    var textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    var ok = false;
+    try {
+      ok = document.execCommand("copy");
+    } catch (err) {
+      ok = false;
+    }
+    document.body.removeChild(textarea);
+    // Quitar el textarea le deja el foco al body -- si el botón lo tenía
+    // (usuario navegando con teclado), se lo devolvemos.
+    if (hadFocus) btn.focus();
+    showButtonState(btn, ok ? "Copiado" : "No se pudo copiar", ok ? "copied" : "copy-failed");
+  }
+
+  document.querySelectorAll(".copy-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      // Lee el texto visible (ya decodificado) en vez de un atributo
+      // duplicado — evita el problema de escapar el mismo valor dos
+      // veces para dos contextos HTML distintos (texto y atributo).
+      var textEl = btn.previousElementSibling;
+      var text = textEl ? textEl.textContent : "";
+
+      // navigator.clipboard suele ser undefined al abrir este reporte
+      // como archivo local (file://), que es el uso previsto — por eso
+      // siempre hay un fallback síncrono, no solo un catch().
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(
+          function () { showButtonState(btn, "Copiado", "copied"); },
+          function () { legacyCopy(text, btn); }
+        );
+      } else {
+        legacyCopy(text, btn);
+      }
+    });
+  });
+</script>
+</body>
+</html>
