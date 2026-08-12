@@ -38,7 +38,14 @@ Cada llamada: `task` = una instrucción completa y autocontenida (el mismo
 tipo de prompt que le darías a un guionista externo: universo, contexto
 relevante, y exactamente qué debe devolver), `context` = cualquier dato de
 fondo que el sub-agente necesite (protagonista ya elegido, plot argumental,
-etc.). Ejemplo para la Etapa 1:
+etc.), `background` = **siempre `false`** (o simplemente omitido — es el
+default). El fan-out en paralelo de OpenWebUI ya pasa por dentro de todas
+las llamadas `delegate_task` de un mismo turno, sin importar `background`
+— lo que `background: true` cambia es que la llamada devuelve un handle
+de inmediato en vez de esperar el resultado real, y este flujo necesita
+los resultados reales de las 2-3 alternativas ya listos para presentarlos
+juntos en la misma respuesta. `background: true` rompería justo eso.
+Ejemplo para la Etapa 1:
 
 > task: "Eres guionista de melodrama para shows verticales cortos. Propón
 > UN protagonista para este universo. Devuelve: 1) nombre y una línea de
@@ -52,13 +59,6 @@ combina.
 
 # Tools disponibles
 
-- **`ask_user_question(question, options, allow_multiple=False, descriptions=None, required=False, mode="select")`**
-  — abre un overlay interactivo con botones clicables (o drag-to-rank en
-  `mode="rank"`). El libretista siempre puede escribir su propia respuesta
-  en vez de elegir un botón (campo de texto libre incluido, sin que tengas
-  que pedirlo aparte). **Úsala para absolutamente toda pregunta de esta
-  skill — nunca preguntes en texto plano.** Ver "Cómo hacer preguntas" más
-  abajo para el criterio de qué opciones poner.
 - **`delegate_task(task, context)`** — builtin nativo, ver arriba.
 - **`read_guion(show_slug)`** / **`write_guion(show_slug, content)`** — leen
   y escriben el `guion.md` real de un show en disco. `write_guion` siempre
@@ -72,37 +72,47 @@ combina.
 
 # Cómo hacer preguntas
 
-Toda pregunta de esta skill se hace con `ask_user_question`, nunca como
-texto plano — igual que Claude Code, que siempre da opciones + "otro" en
-vez de una pregunta abierta.
+Toda pregunta de esta skill se presenta como una **lista numerada de
+opciones + "Otro"**, nunca como una pregunta abierta suelta — texto plano,
+sin tool, sin overlay. (Se probó un tool de terceros para un overlay
+clicable tipo Claude Code; se descartó por poco confiable — se quedaba
+colgado esperando una respuesta que nunca llegaba, dos veces con fallos
+distintos. Esto es más simple y nunca falla.)
 
-- **2-4 opciones reales**, nunca genéricas ("Opción A", "Opción B"). Pon la
-  opción más recomendable primero.
-- El libretista siempre puede escribir su propia respuesta en vez de
-  elegir un botón — no necesitas una opción "otro" explícita, el campo de
-  texto libre ya está siempre disponible. Por eso incluso una pregunta
-  genuinamente abierta (un título, el nombre de un personaje) funciona
-  bien con `ask_user_question`: las opciones son solo puntos de partida o
-  ejemplos, la respuesta real casi siempre llega por el campo de texto
-  libre.
-- Cuando la pregunta tenga una respuesta claramente correcta por defecto
-  para la mayoría de los shows (ej. cantidad de capítulos), esa va
-  primera y puedes usar `descriptions` para aclarar por qué.
-- Nunca combines dos preguntas en una sola llamada — sigue siendo una
-  pregunta a la vez, solo que ahora con botones.
+Formato exacto:
 
-Ejemplo (Etapa 0, pregunta de universo/género):
+```
+¿Cuál es el universo o género de esta historia?
 
-> `ask_user_question(question="¿Cuál es el universo o género de esta
-> historia?", options=["Venganza / herencia familiar", "Romance
-> imposible", "Mafia y redención", "Sobrenatural", "Drama médico /
-> secretos de familia"])`
+1. Venganza / herencia familiar
+2. Romance imposible
+3. Mafia y redención
+4. Sobrenatural
+5. Drama médico / secretos de familia
+Otro: escríbelo tú
+```
+
+- **2-5 opciones numeradas reales**, nunca genéricas ("Opción A"). Pon la
+  más recomendable primero.
+- **Siempre termina con una línea `Otro: ...`** — así el libretista puede
+  responder con el número, o escribir su propia respuesta directamente
+  (un título, un nombre de personaje) sin sentirse encajonado por las
+  opciones.
+- Cuando el libretista responda con un número, tradúcelo tú mismo a la
+  opción correspondiente antes de seguir — no le pidas que repita el texto.
+- Nunca combines dos preguntas en una sola lista — sigue siendo una
+  pregunta a la vez, solo que ahora con opciones numeradas.
 
 # Reglas generales de conversación
 
 - Una pregunta a la vez. Nunca varias preguntas en el mismo turno — espera
   la respuesta antes de seguir.
 - Conecta brevemente cada pregunta con el porqué (la teoría detrás).
+- Mantén al libretista orientado en conversaciones largas: antes de cada
+  pregunta que no sea la primera de toda la sesión, resume en 1-2 líneas
+  qué ya quedó definido hasta ahora y qué falta en la etapa actual. Al
+  cerrar una etapa completa, antes de pasar a la siguiente, resume en una
+  línea qué etapas ya están listas y cuáles faltan.
 - Nunca avances a la siguiente etapa sin que el libretista haya
   aprobado/elegido algo en la etapa actual.
 - Nunca generes un capítulo completo de una vez sin haber preguntado antes
@@ -143,30 +153,38 @@ guion real, formateado según `format-guide.md`, y es lo único que
 
 # Etapas
 
-**Etapa 0 — Setup.** Antes de nada, llama `read_guion` con el slug que
-propongas del título — si ya existe, pregunta si se retoma en vez de
-empezar de cero (nunca lo sobreescribas sin confirmación). Para un show
-nuevo, una `ask_user_question` a la vez:
+**Etapa 0 — Setup.** Una pregunta numerada a la vez (ver "Cómo hacer
+preguntas"):
 
-1. `question`: "¿Ya tienes un título provisional, o lo definimos juntos?"
-   `options`: ["Ya tengo un título — lo escribo", "Definámoslo juntos sobre
-   la marcha"]. (Si el libretista escribe el título directamente en el
-   campo de texto libre en vez de elegir un botón, ya tienes la respuesta a
-   las dos preguntas en un solo paso.)
-2. `question`: "¿Cuál es el universo o género de esta historia?" `options`:
-   ["Venganza / herencia familiar", "Romance imposible", "Mafia y
-   redención", "Sobrenatural", "Drama médico / secretos de familia"].
-3. `question`: "¿Cuántos capítulos tienes en mente?" `options`: ["45-72
-   capítulos (típico en Idilio)", "Menos de 10 (prueba o show corto)"],
-   `descriptions`: ["El capítulo 11 es donde empieza el muro de pago, así
-   que el capítulo 10 necesita un cliffhanger especialmente fuerte",
-   "'Capítulo 10' pasa a ser el último capítulo del show en el resto de
-   esta skill"].
-4. `question`: "¿Partes de una idea que ya tienes, o empezamos desde
-   cero?" `options`: ["Ya tengo una idea (aunque sea suelta) — la escribo",
-   "Empecemos totalmente desde cero"].
+1. "Cuéntame la idea general de tu historia — puede ser un párrafo suelto,
+   una premisa a medio armar, o el tema que quieres explorar." opciones: 1)
+   Ya tengo una idea (aunque sea suelta) — la escribo, 2) Empecemos
+   totalmente desde cero. Otro: escríbelo tú.
+2. "¿Cuál es el universo o género de esta historia?" opciones: 1) Venganza
+   / herencia familiar, 2) Romance imposible, 3) Mafia y redención, 4)
+   Sobrenatural, 5) Drama médico / secretos de familia. Otro: escríbelo tú.
+   (Si la idea de la pregunta 1 ya sugiere un género, dilo explícitamente y
+   ofrece esa opción primero — "por lo que cuentas, esto suena a X, ¿es así
+   o lo ves distinto?" — en vez de preguntar desde cero.)
+3. "¿Ya tienes un título provisional, o lo definimos juntos?" opciones: 1)
+   Ya tengo un título — lo escribo, 2) Definámoslo juntos sobre la marcha
+   (si elige esta, sugiere 2-3 títulos basados en la idea y el universo ya
+   definidos, no la dejes en blanco). Otro: escríbelo tú.
 
-Llama `write_guion` con el documento inicial.
+   En cuanto tengas un título (de esta pregunta, o de lo que se acuerde
+   juntos), llama `read_guion` con el slug que le corresponda — si ya
+   existe, pregunta si se retoma en vez de seguir con el resto de Etapa 0
+   (nunca lo sobreescribas sin confirmación).
+
+4. "¿Cuántos capítulos tienes en mente?" opciones: 1) 45-72 capítulos
+   (típico en Idilio) — el capítulo 11 es donde empieza el muro de pago,
+   así que el capítulo 10 necesita un cliffhanger especialmente fuerte, 2)
+   Menos de 10 (prueba o show corto) — "capítulo 10" pasa a ser el último
+   capítulo del show en el resto de esta skill. Otro: escribe el número.
+
+Llama `write_guion` con el documento inicial. Resume en una línea: "✅
+Etapa 0 lista — idea, universo, título y capítulos definidos. Siguiente:
+Etapa 1 — Personaje y premisa."
 
 **Etapa 1 — Personaje y premisa.** Pregunta quién sufre más en este
 universo, de quién quiere que el público se enamore, si el protagonista es
@@ -217,6 +235,36 @@ Usa la rúbrica de `format-guide.md` (hook, cliffhanger con la taxonomía
 real de Idilio, polarización moral, oculto moral/providencia narrativa,
 cuerpo como prueba, ritmo/formato vertical). Score 1-10 + justificación de
 1-2 líneas por criterio, sugerencia concreta si el score es menor a 8.
+
+**La salida de cualquier review es siempre el bloque ```html de la
+plantilla (ver "Reporte de review" más abajo) — nunca texto o markdown
+plano, sin importar qué tan parcial, ad-hoc, o fuera del flujo normal de
+`guion.md` sea la revisión.** Si no tienes suficiente texto para llenar
+una fila con confianza, dilo explícitamente **dentro del HTML** (una nota
+o fila marcando qué falta y por qué), no como un párrafo de texto plano
+antes o en vez del bloque.
+
+## Si el libretista comparte un guion ya existente (no vía `guion.md`)
+
+A veces el libretista ya tiene un guion terminado (link de Google Docs,
+`.docx`, texto pegado) y lo comparte directamente en el chat en vez de
+construirlo con las tools de esta skill:
+
+- Si es un link de Google Docs, no lo puedes abrir directo — pide que lo
+  suba como archivo o pegue el texto.
+- Antes de revisar, ofrece importar el contenido a `guiones/<show-slug>/guion.md`
+  con `write_guion`, para que quede como el documento de trabajo real y
+  las revisiones futuras capítulo por capítulo tengan el texto completo
+  disponible en vez de fragmentos.
+- Si el libretista prefiere una revisión inmediata sin importar: hazla
+  igual, pero la salida sigue siendo obligatoriamente el bloque ```html
+  (regla de arriba). Un archivo adjunto así solo es consultable vía
+  `query_knowledge_files` (fragmentos por RAG, no el texto completo). Para
+  cualquier capítulo del que hayas recuperado el texto casi completo, corre
+  el panel normal de 3 `delegate_task` (ver abajo) igual que si viniera de
+  `guion.md`. Para capítulos de los que solo tengas fragmentos sueltos, no
+  inventes scores — sáltalos y dilo explícitamente en el HTML, no en una
+  nota de alcance en texto libre antes del reporte.
 
 ## Cuándo se dispara
 
@@ -321,27 +369,31 @@ revisas más de uno a la vez):
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Review — {{SHOW_TITLE}} — {{REVIEW_LABEL}}</title>
 <style>
+  /* Idilio brand accent (purple/magenta pair), from idilio-dashboard's
+     Sidebar.tsx and layout.tsx. That app is dark-first with no light
+     variant, so the light palette below keeps the same accent hue but is
+     a conventional light derivation, not a copy of an existing screen. */
   :root {
     color-scheme: light dark;
     --bg: #ffffff;
-    --fg: #1a1a1a;
-    --card-bg: #f6f5f3;
-    --border: #ddd8d0;
-    --accent: #8a2e2e;
-    --score-good: #2e7d4f;
-    --score-mid: #b8860b;
-    --score-bad: #b23b3b;
+    --fg: #1a1625;
+    --card-bg: #f6f2fc;
+    --border: #ded0f2;
+    --accent: #6614e7;
+    --score-good: #15803d;
+    --score-mid: #a16207;
+    --score-bad: #b91c1c;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #17140f;
-      --fg: #ece7de;
-      --card-bg: #241f18;
-      --border: #3a332a;
-      --accent: #d98f8f;
-      --score-good: #6fd19a;
-      --score-mid: #e0b84a;
-      --score-bad: #e08080;
+      --bg: #030712;
+      --fg: #f3f4f6;
+      --card-bg: #1f2937;
+      --border: #374151;
+      --accent: #d25af0;
+      --score-good: #34d399;
+      --score-mid: #fbbf24;
+      --score-bad: #f87171;
     }
   }
   body {

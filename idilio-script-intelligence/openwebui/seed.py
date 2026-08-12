@@ -15,7 +15,7 @@ you're asking for.
 
 Idempotent-ish: re-running updates existing tools/knowledge/skill rather
 than erroring on "already exists", so this is safe to re-run after editing
-a Tool file or system_prompt.md.
+a Tool file or SKILL.md.
 
 Usage:
     python seed.py --base-url http://localhost:8080 \
@@ -51,14 +51,6 @@ TOOL_FILES = [
     ('script_guion', 'Script Guion'),
     ('script_export_docx', 'Script Export a DOCX'),
 ]
-
-# Not vendored here (third-party code -- see openwebui/README.md's
-# "Optional companion" section for the install link and the review that
-# was done before installing it). system_prompt.md's "Como hacer
-# preguntas" section assumes this is attached: every question in the
-# skill goes through it instead of plain text. If it's not installed yet,
-# attach_to_base_model() skips it and warns instead of failing.
-INTERACTIVE_QUESTION_TOOL_ID = 'ask_user_question'
 
 SKILL_ID = 'idilio-script-intelligence'
 SKILL_NAME = 'Idilio Script Intelligence'
@@ -169,7 +161,7 @@ def seed_knowledge_files(session: requests.Session, base_url: str, knowledge_id:
 
 
 def seed_skill(session: requests.Session, base_url: str) -> None:
-    content = (HERE / 'system_prompt.md').read_text(encoding='utf-8')
+    content = (HERE / 'SKILL.md').read_text(encoding='utf-8')
     payload = {
         'id': SKILL_ID,
         'name': SKILL_NAME,
@@ -210,15 +202,6 @@ def attach_to_base_model(
 
     tool_ids = set(meta.get('toolIds') or [])
     tool_ids.update(t_id for t_id, _ in TOOL_FILES)
-
-    installed_tool_ids = {t['id'] for t in session.get(f'{base_url}/api/v1/tools/').json()}
-    if INTERACTIVE_QUESTION_TOOL_ID in installed_tool_ids:
-        tool_ids.add(INTERACTIVE_QUESTION_TOOL_ID)
-    else:
-        print(f"WARNING: '{INTERACTIVE_QUESTION_TOOL_ID}' isn't installed -- the skill's "
-              'questions will fall back to plain text instead of the interactive picker. '
-              'See openwebui/README.md, "Optional companion", to install it.')
-
     meta['toolIds'] = sorted(tool_ids)
 
     knowledge = meta.get('knowledge') or []

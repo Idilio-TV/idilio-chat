@@ -16,27 +16,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Review — {{SHOW_TITLE}} — {{REVIEW_LABEL}}</title>
 <style>
+  /* Idilio brand accent (purple/magenta pair) taken from
+     idilio-dashboard's src/components/Sidebar.tsx and src/app/layout.tsx
+     -- that app is dark-first with no light variant of its own, so the
+     light palette below keeps the same accent hue but is otherwise a
+     conventional light derivation, not a copy of an existing screen. */
   :root {
     color-scheme: light dark;
     --bg: #ffffff;
-    --fg: #1a1a1a;
-    --card-bg: #f6f5f3;
-    --border: #ddd8d0;
-    --accent: #8a2e2e;
-    --score-good: #2e7d4f;
-    --score-mid: #b8860b;
-    --score-bad: #b23b3b;
+    --fg: #1a1625;
+    --card-bg: #f6f2fc;
+    --border: #ded0f2;
+    --accent: #6614e7;
+    --score-good: #15803d;
+    --score-mid: #a16207;
+    --score-bad: #b91c1c;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #17140f;
-      --fg: #ece7de;
-      --card-bg: #241f18;
-      --border: #3a332a;
-      --accent: #d98f8f;
-      --score-good: #6fd19a;
-      --score-mid: #e0b84a;
-      --score-bad: #e08080;
+      --bg: #030712;
+      --fg: #f3f4f6;
+      --card-bg: #1f2937;
+      --border: #374151;
+      --accent: #d25af0;
+      --score-good: #34d399;
+      --score-mid: #fbbf24;
+      --score-bad: #f87171;
     }
   }
   body {

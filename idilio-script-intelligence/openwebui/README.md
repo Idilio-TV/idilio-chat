@@ -23,12 +23,12 @@ nothing to select, it loads itself when relevant.
    This registers the 2 custom tools (`script_guion`,
    `script_export_docx`), creates the "Idilio Script Intelligence"
    Knowledge collection, uploads the 3 reference `.md` files into it,
-   registers `system_prompt.md`'s content as a native OpenWebUI **Skill**
+   registers `SKILL.md`'s content as a native OpenWebUI **Skill**
    (see below), checks that subagents are enabled, and attaches the tools
    + knowledge + skill directly to `--base-model-id` (default
    `gpt-5.6-luna`) — merged into whatever's already attached there, not
    overwritten. Safe to re-run after editing a tool file or
-   `system_prompt.md`.
+   `SKILL.md`.
 3. That's it. Select `gpt-5.6-luna` (or whatever `--base-model-id` you
    used) like any other model in the chat UI. **There is no separate
    "Idilio Script Intelligence" model to pick** — the skill loads itself
@@ -58,7 +58,7 @@ Tools/Functions), with the same lazy-load shape as a Claude Code skill:
   `POST /api/v1/models/model/update`) — not a separate resource you pick
   in the chat UI.
 
-This is why `system_prompt.md` (the skill's `content`) doesn't need to be
+This is why `SKILL.md` (the skill's `content`) doesn't need to be
 `gpt-5.6-luna`'s `params.system` override anymore — that field is left
 alone, so `gpt-5.6-luna` still behaves like `gpt-5.6-luna` for everything
 unrelated, and only pulls in the full ~5,000-token skill instructions when
@@ -69,26 +69,29 @@ following the real script rather than improvising from the one-line
 description); an unrelated question ("cual es la capital de francia?")
 gets answered directly with no melodrama tangent.
 
-## Interactive question UI (install this before using the skill)
+## How the skill asks questions: plain numbered text, not a tool
 
-`system_prompt.md` asks every question through `ask_user_question()` —
-clickable options (single-select, multi-select, drag-to-rank), always with
-a free-text field so the writer can type their own answer instead of
-picking a button. Without it, the skill's questions silently fall back to
-plain text — that's not a redesign, just what happens when the tool call
-isn't available. `seed.py` checks for it and attaches it automatically if
-present, but **can't install it for you** — it's third-party code, not
-vendored in this repo. Install it yourself first:
+`SKILL.md` asks every question as plain numbered options (`1. ...`,
+`2. ...`, always ending with `Otro: escríbelo tú`) that the writer answers
+by typing a number or their own text. No tool call, no clickable overlay.
 
-**"Claude-like Ask User Question"** by Marios Adamidis:
-<https://openwebui.com/posts/claude_like_ask_user_question_6d0a6a9b>
-(Admin Settings → Tools → Import from Link). Reviewed by hand before
-installing it on the local dev instance during this build: pure Python, no
-network/subprocess/eval calls, renders via OpenWebUI's standard `execute`
-event channel.
+This wasn't the first design. A third-party tool — **"Claude-like Ask User
+Question"** by Marios Adamidis
+(<https://openwebui.com/posts/claude_like_ask_user_question_6d0a6a9b>) —
+was reviewed by hand (pure Python, no network/subprocess/eval calls,
+renders via OpenWebUI's standard `execute` event channel), installed on the
+local dev instance, and attached to `gpt-5.6-luna` to get a Claude-Code-like
+clickable picker. It failed in two different ways across two real uses: once
+with a cosmetic-but-alarming `Model '' was not found` error (root-caused to
+an unrelated transient network blip during a model-cache refresh, not this
+tool — see the top-level PR description), and once by hanging indefinitely
+on "⏳ Waiting for user input..." with no overlay ever rendering and no
+timeout to recover from. Two distinct failure modes from the same
+un-owned, un-vendored dependency was enough to drop it — plain numbered
+text never fails this way.
 
-If `seed.py` prints a warning that it's not installed, install it and
-re-run `seed.py` — it'll pick it up and attach it on the next pass.
+The tool is still installed on the instance (unattached, unused) if this is
+worth revisiting later; `seed.py` no longer attaches or references it.
 
 ## Two things this port does natively that the other two platforms can't
 
@@ -106,7 +109,7 @@ the `delegate_calls` / `asyncio.gather` block) — not an assumption.
 fenced code block in a response and renders it live in a side panel
 (`Settings → Interface → detect artifacts`, verified in
 `src/lib/components/chat/Messages/ContentRenderer.svelte`). So the review
-report template is embedded directly in `system_prompt.md` (not put in the
+report template is embedded directly in `SKILL.md` (not put in the
 Knowledge collection — see below) and the assistant fills it in and emits
 it as a real ` ```html ` block, which renders live with working "Copiar
 sugerencia" buttons. No download step, no separate Tool needed.
@@ -119,7 +122,7 @@ plain text once tags are stripped. Uploading it 400s with `"The content
 provided is empty"` (confirmed against a live instance, not just inferred).
 It isn't useful for semantic retrieval anyway. Since the assistant needs to
 reproduce it byte-for-byte on demand rather than search it, it's embedded
-directly in `system_prompt.md` instead — always available, no retrieval
+directly in `SKILL.md` instead — always available, no retrieval
 uncertainty.
 
 ## What's verified vs. not (as of this build)

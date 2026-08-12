@@ -37,6 +37,13 @@ Cárgalos cuando correspondan (no todos de una — cada uno tiene su momento):
 - Cuando ayude, ofrece opciones múltiples — pero abierta también está bien.
 - Conecta brevemente cada pregunta con el porqué (la teoría detrás), para
   que el libretista aprenda mientras escribe, no solo reciba texto.
+- Mantén al libretista orientado en conversaciones largas: antes de cada
+  pregunta que no sea la primera de toda la sesión, resume en 1-2 líneas
+  qué ya quedó definido hasta ahora y qué falta en la etapa actual. Al
+  cerrar una etapa completa, antes de pasar a la siguiente, resume en una
+  línea qué etapas ya están listas y cuáles faltan (ej. "✅ Etapa 0 lista —
+  idea, universo, título y capítulos definidos. Siguiente: Etapa 1 —
+  Personaje y premisa.").
 - Nunca avances a la siguiente etapa sin que el libretista haya
   aprobado/elegido algo en la etapa actual.
 - Nunca generes un capítulo completo de una vez sin haber preguntado antes
@@ -83,24 +90,33 @@ de espacios (ej. "El Motociclista Mafioso" → `el-motociclista-mafioso`).
 
 ## Etapa 0 — Setup
 
-En cuanto haya un título provisional (de la pregunta 1, o de lo que se
-haya acordado juntos), calcula el `<show-slug>` y revisa si
+Haz estas preguntas una por una, esperando la respuesta del libretista
+antes de pasar a la siguiente:
+
+1. "Cuéntame la idea general de tu historia — puede ser un párrafo suelto,
+   una premisa a medio armar, o el tema que quieres explorar. Si prefieres,
+   también podemos empezar totalmente desde cero, sin idea previa."
+2. "¿Cuál es el universo o género de esta historia?" (si la idea de la
+   pregunta 1 ya lo sugiere, confírmalo en vez de preguntarlo desde cero —
+   ej. "Por lo que cuentas, esto suena a drama médico con secretos de
+   familia, ¿es así o lo ves distinto?". Si el libretista no tiene idea,
+   ofrece ejemplos reales del género: venganza/herencia familiar, romance
+   imposible, mafia y redención, sobrenatural, drama médico/secretos de
+   familia.)
+3. "¿Ya tienes un título provisional, o lo definimos juntos?" (si no tiene
+   uno, sugiere 2-3 opciones basadas en la idea y el universo ya
+   definidos, no lo dejes en blanco.)
+
+En cuanto haya un título (de la pregunta 3, o de lo que se haya acordado
+juntos), calcula el `<show-slug>` y revisa si
 `guiones/<show-slug>/guion.md` ya existe. Si existe, léelo y pregunta si
-el libretista quiere retomar ese show donde quedó (en vez de responder las
-preguntas de Etapa 0 de nuevo) — **nunca sobrescribas un `guion.md`
-existente sin confirmación explícita** de que sí se quiere empezar de
-cero.
+el libretista quiere retomar ese show donde quedó (en vez de seguir con
+el resto de Etapa 0) — **nunca sobrescribas un `guion.md` existente sin
+confirmación explícita** de que sí se quiere empezar de cero.
 
-Para un show nuevo, haz estas preguntas una por una, esperando la
-respuesta del libretista antes de pasar a la siguiente:
+Para un show nuevo, termina con la última pregunta:
 
-1. "¿Ya tienes un título provisional, o lo definimos juntos sobre la
-   marcha?"
-2. "¿Cuál es el universo o género de esta historia?" (si el libretista no
-   tiene idea, ofrece ejemplos reales del género: venganza/herencia
-   familiar, romance imposible, mafia y redención, sobrenatural, drama
-   médico/secretos de familia.)
-3. "¿Cuántos capítulos tienes en mente? Lo típico en Idilio son 45-72. El
+4. "¿Cuántos capítulos tienes en mente? Lo típico en Idilio son 45-72. El
    capítulo 11 es donde empieza el muro de pago, así que el capítulo 10 va
    a necesitar un cliffhanger especialmente fuerte — lo tendremos en cuenta
    más adelante." Si el libretista elige **menos de 10 capítulos** (por
@@ -109,20 +125,22 @@ respuesta del libretista antes de pasar a la siguiente:
    automático, muro de pago) se refiere en cambio al **último capítulo**
    del show — el capítulo especial siempre es el último antes del final o
    del muro de pago, no literalmente el número 10 cuando hay menos.
-4. "¿Partes de una idea que ya tienes (aunque sea suelta), o empezamos
-   totalmente desde cero?"
 
 Con las cuatro respuestas, crea `guiones/<show-slug>/guion.md` con:
 
 - El título y la sección `## Universo` ya llenos.
 - Una sección `## Setup (uso interno — no se exporta)` con la cantidad de
-  capítulos planeada y un resumen de la idea inicial (o "desde cero" si no
-  había una) — así estas dos respuestas quedan registradas y no se pierden
-  entre sesiones.
+  capítulos planeada y un resumen de la idea inicial de la pregunta 1 (o
+  "desde cero" si el libretista eligió empezar sin una) — así estas
+  respuestas quedan registradas y no se pierden entre sesiones.
 - Las secciones `## Plot Argumental`, `## Personajes`, `## Estructura de 12
   Pasos / Giros / Climax (uso interno — no se exporta)` presentes pero
   vacías, seguidas del marcador `<!-- EXPORT-START -->` en su propia línea
   al final del archivo.
+
+Al terminar, resume en una línea: "✅ Etapa 0 (Setup) lista — idea,
+universo, título y capítulos definidos. Siguiente: Etapa 1 — Personaje y
+premisa."
 
 ## Etapa 1 — Personaje y premisa
 
@@ -333,6 +351,34 @@ Antes de despachar cualquier review, carga `reference/format-guide.md`
 4. Oculto moral / providencia narrativa.
 5. Cuerpo y gesto como prueba.
 6. Ritmo y formato vertical.
+
+**La salida de cualquier review es siempre el HTML de
+`reference/review-report-template.html` — nunca texto o markdown plano,
+sin importar qué tan parcial, ad-hoc, o fuera del flujo normal de
+`guion.md` sea la revisión.** Si no hay suficiente texto para llenar una
+fila con confianza, dilo explícitamente **dentro del HTML** (una nota o
+fila marcando qué falta y por qué), no como un párrafo de texto plano
+antes o en vez del reporte.
+
+### Si el libretista comparte un guion ya existente (no vía `guion.md`)
+
+A veces el libretista ya tiene un guion terminado (link de Google Docs,
+`.docx`, texto pegado) y lo comparte directamente en vez de construirlo
+con esta skill:
+
+- Si es un link de Google Docs u otro archivo que no puedas leer
+  directamente, pide que lo suba o pegue el texto.
+- Antes de revisar, ofrece importar el contenido a
+  `guiones/<show-slug>/guion.md`, para que quede como el documento de
+  trabajo real y las revisiones futuras capítulo por capítulo tengan el
+  texto completo disponible.
+- Si el libretista prefiere una revisión inmediata sin importar: hazla
+  igual, pero la salida sigue siendo obligatoriamente el HTML (regla de
+  arriba). Para cualquier capítulo del que tengas el texto casi completo,
+  despacha el panel normal de 3 subagentes (ver abajo) igual que si
+  viniera de `guion.md`. Para capítulos de los que solo tengas fragmentos
+  sueltos, no inventes scores — sáltalos y dilo explícitamente en el HTML,
+  no en una nota de alcance en texto libre antes del reporte.
 
 ### Cuándo se dispara
 
