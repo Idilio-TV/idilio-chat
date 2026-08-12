@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 from pathlib import Path
 
 import requests
@@ -156,12 +157,31 @@ def seed_knowledge_files(session: requests.Session, base_url: str, knowledge_id:
             raise RuntimeError(f'failed to upload {path.name}: {upload.status_code} {upload.text}')
         file_id = upload.json()['id']
 
-        attach = session.post(
-            f'{base_url}/api/v1/knowledge/{knowledge_id}/file/add',
-            json={'file_id': file_id},
-        )
-        if not attach.ok:
-            raise RuntimeError(f'failed to attach {path.name} to knowledge: {attach.status_code} {attach.text}')
+        # There's a race in OpenWebUI itself between the upload finishing
+        # (returning a file_id) and the file actually being flushed to
+        # disk -- calling /file/add immediately after upload can read it
+        # before that write completes and get a spurious "content
+        # provided is empty" 400, even though the same file extracts
+        # perfectly a moment later (confirmed against a real deploy: the
+        # exact same content, same loader call, succeeds when retried
+        # seconds after upload). Retry a few times with backoff rather
+        # than failing the whole seed on a transient timing issue.
+        last_error = None
+        for attempt in range(1, 4):
+            attach = session.post(
+                f'{base_url}/api/v1/knowledge/{knowledge_id}/file/add',
+                json={'file_id': file_id},
+            )
+            if attach.ok:
+                last_error = None
+                break
+            last_error = f'{attach.status_code} {attach.text}'
+            if 'content provided is empty' not in attach.text.lower():
+                break  # a different failure -- don't mask it with retries
+            print(f'  attach attempt {attempt}/3 hit the empty-content race, retrying...')
+            time.sleep(attempt * 2)
+        if last_error:
+            raise RuntimeError(f'failed to attach {path.name} to knowledge: {last_error}')
         print(f'uploaded + attached: {path.name}')
 
 
