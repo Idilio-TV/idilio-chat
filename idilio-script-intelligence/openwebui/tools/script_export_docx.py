@@ -1,7 +1,7 @@
 """
-title: Melodrama Export a DOCX
+title: Script Export a DOCX
 author: Idilio
-description: Convierte la parte exportable de un guion.md (desde EXPORT-START) a un archivo .docx, para la skill Melodrama Script Intelligence.
+description: Convierte la parte exportable de un guion.md (desde EXPORT-START) a un archivo .docx, para la skill Idilio Script Intelligence.
 required_open_webui_version: 0.5.0
 requirements: python-docx
 version: 0.1.0
@@ -27,7 +27,7 @@ def _slug(show_slug: str) -> str:
 class Tools:
     class Valves(BaseModel):
         BASE_DIR: str = Field(
-            default='/app/backend/data/melodrama-guiones',
+            default='/app/backend/data/guiones',
             description='Directorio base donde vive guiones/<show-slug>/guion.md y donde se escribe el .docx.',
         )
 

@@ -1,4 +1,4 @@
-# Melodrama Script Intelligence — multi-platform
+# Idilio Script Intelligence — multi-platform
 
 A writing partner for libretistas developing Idilio vertical-format
 melodrama shows, from a bare idea through a finished chapter-by-chapter

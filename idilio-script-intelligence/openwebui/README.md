@@ -13,19 +13,19 @@ sub-agents and real file persistence**, running on this server.
    Settings).
 2. Run the seed script:
    ```bash
-   cd idilio-melodrama-assistant/openwebui
+   cd idilio-script-intelligence/openwebui
    python3 seed.py --base-url http://localhost:3000 \
        --email you@idilio.tv --password '...'
    ```
-   This registers the 2 custom tools (`melodrama_guion`,
-   `melodrama_export_docx`), creates the "Melodrama Script Intelligence"
+   This registers the 2 custom tools (`script_guion`,
+   `script_export_docx`), creates the "Idilio Script Intelligence"
    Knowledge collection, uploads the 3 reference `.md` files into it, and
    checks that subagents are enabled. Safe to re-run — it updates existing
    tools and skips files/knowledge that already match.
 3. In the OpenWebUI admin UI: **Workspace → Models → new model preset.**
    - System Prompt: paste [`system_prompt.md`](system_prompt.md) in full.
-   - Attach the 2 `melodrama_*` tools.
-   - Attach the "Melodrama Script Intelligence" knowledge collection.
+   - Attach the 2 `script_*` tools.
+   - Attach the "Idilio Script Intelligence" knowledge collection.
 4. If `seed.py` warned that subagents are off: **Admin Settings →
    Subagents → Enable Subagents.** (On a fresh instance this defaults to
    off; enable once, server-wide.)
@@ -82,12 +82,12 @@ uncertainty.
 Verified against a live local instance (`docker-compose up`, `docker exec`
 into the running container):
 - `seed.py` runs end-to-end and is idempotent on re-run.
-- `melodrama_guion.py`'s `read_guion`/`write_guion`/`chapter_exists` all
+- `script_guion.py`'s `read_guion`/`write_guion`/`chapter_exists` all
   work correctly against real files, including that the `show_slug`
   sanitizer neutralizes a `../../etc/evil`-style path-traversal attempt
   (it gets collapsed to a harmless slug, not rejected with an error — same
   effect, different mechanism).
-- `melodrama_export_docx.py` generates a real, correctly-structured
+- `script_export_docx.py` generates a real, correctly-structured
   `.docx` from realistic (blank-line-separated) script content —
   chapter headings, bolded scene headings, dialogue all come through
   correctly. `python-docx` installs automatically via the tool's

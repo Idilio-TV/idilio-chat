@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "idilio-melodrama-assistant",
+  "name": "idilio-script-intelligence",
   "description": "Idilio's Claude Code plugin marketplace — writing-partner tools for libretistas developing vertical-format melodrama shows.",
   "owner": {
     "name": "Idilio"
@@ -13,7 +13,7 @@
         "name": "Idilio"
       },
       "category": "writing",
-      "source": "./idilio-melodrama-assistant/claude-plugin"
+      "source": "./idilio-script-intelligence/claude-plugin"
     }
   ]
 }

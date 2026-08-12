@@ -1,4 +1,4 @@
-# Melodrama Script Intelligence — ChatGPT Custom GPT
+# Idilio Script Intelligence — ChatGPT Custom GPT
 
 Adapted from the Claude Code skill at `../claude-plugin/skills/idilio-script-intelligence/`.
 GPT creation itself is a manual step in the ChatGPT UI — there's no API for
@@ -7,7 +7,7 @@ it — so this bundle just gives you the exact content to paste in.
 ## Setup
 
 1. Go to [chatgpt.com/gpts/editor](https://chatgpt.com/gpts/editor) → **Create**.
-2. **Name:** `Melodrama Script Intelligence` (or your own naming).
+2. **Name:** `Idilio Script Intelligence` (or your own naming).
 3. **Instructions:** paste the full contents of [`instructions.md`](instructions.md).
 4. **Knowledge:** upload all 4 files from [`knowledge/`](knowledge/):
    - `brooks-theory.md`

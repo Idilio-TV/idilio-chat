@@ -27,16 +27,16 @@ import requests
 HERE = Path(__file__).resolve().parent
 TOOLS_DIR = HERE / 'tools'
 KNOWLEDGE_DIR = HERE / 'knowledge'
-KNOWLEDGE_NAME = 'Melodrama Script Intelligence'
+KNOWLEDGE_NAME = 'Idilio Script Intelligence'
 KNOWLEDGE_DESCRIPTION = (
-    'Referencia de la skill Melodrama Script Intelligence: teoria de '
+    'Referencia de la skill Idilio Script Intelligence: teoria de '
     'Brooks, estructura de 12 pasos, guia de formato y rubrica de '
     'hook/cliffhanger.'
 )
 
 TOOL_FILES = [
-    ('melodrama_guion', 'Melodrama Guion'),
-    ('melodrama_export_docx', 'Melodrama Export a DOCX'),
+    ('script_guion', 'Script Guion'),
+    ('script_export_docx', 'Script Export a DOCX'),
 ]
 
 
@@ -166,7 +166,7 @@ def main() -> int:
     print('\nDone. In the OpenWebUI admin UI:')
     print('1. Workspace -> Models -> create a model preset.')
     print(f'2. Paste {HERE / "system_prompt.md"} as its System Prompt.')
-    print('3. Attach the 2 melodrama_* tools and the "Melodrama Script')
+    print('3. Attach the 2 script_* tools and the "Idilio Script')
     print('   Intelligence" knowledge collection to that model.')
     return 0
 

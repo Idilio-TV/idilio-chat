@@ -1,7 +1,7 @@
 """
-title: Melodrama Guion (Persistencia)
+title: Script Guion (Persistencia)
 author: Idilio
-description: Lee y escribe el guion.md de un show para la skill Melodrama Script Intelligence -- el documento de trabajo persiste entre sesiones en disco.
+description: Lee y escribe el guion.md de un show para la skill Idilio Script Intelligence -- el documento de trabajo persiste entre sesiones en disco.
 required_open_webui_version: 0.5.0
 version: 0.1.0
 """
@@ -25,7 +25,7 @@ def _slug(show_slug: str) -> str:
 class Tools:
     class Valves(BaseModel):
         BASE_DIR: str = Field(
-            default='/app/backend/data/melodrama-guiones',
+            default='/app/backend/data/guiones',
             description='Directorio base donde vive guiones/<show-slug>/guion.md.',
         )
 
