@@ -14,15 +14,21 @@
 #   DEPLOY_ADMIN_EMAIL=you@idilio.tv DEPLOY_ADMIN_PASSWORD='...' \
 #       ./scripts/deploy.sh
 #
-# Optional env vars (defaults match the current chat.idilio.tv setup):
-#   DEPLOY_BASE_URL   (default http://localhost:3003)
+# Optional env vars:
+#   DEPLOY_BASE_URL   (default derived from OPEN_WEBUI_PORT in .env, same as
+#                      docker-compose.yaml's own default -- see below)
 #   DEPLOY_MODELS     (default gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol)
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 : "${DEPLOY_ADMIN_EMAIL:?set DEPLOY_ADMIN_EMAIL -- the admin account seed.py signs in as}"
 : "${DEPLOY_ADMIN_PASSWORD:?set DEPLOY_ADMIN_PASSWORD}"
-DEPLOY_BASE_URL="${DEPLOY_BASE_URL:-http://localhost:3003}"
+
+# docker-compose.yaml publishes the container on ${OPEN_WEBUI_PORT-3000}.
+# Read that the same place compose does (.env) instead of hardcoding a port
+# that's only correct on whichever host it was last hardcoded for.
+open_webui_port="$(grep -E '^OPEN_WEBUI_PORT=' .env 2>/dev/null | tail -1 | cut -d= -f2-)"
+DEPLOY_BASE_URL="${DEPLOY_BASE_URL:-http://localhost:${open_webui_port:-3000}}"
 DEPLOY_MODELS="${DEPLOY_MODELS:-gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol}"
 
 echo "==> Pulling latest ($(git branch --show-current))..."
