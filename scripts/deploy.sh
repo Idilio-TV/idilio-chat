@@ -3,7 +3,8 @@
 # is already checked out, rebuilds the Docker image from source (never
 # reuses a stale pulled tag), recreates the container, waits for it to
 # report healthy, then re-applies the idilio-script-intelligence
-# skill/tools/knowledge/settings via seed.py.
+# skill/tools/knowledge/settings via seed.py. One command, nothing left for
+# an operator to do by hand afterward.
 #
 # Meant to run ON the deploy host, from the repo root, on the branch
 # already checked out -- this only pulls --ff-only on the CURRENT branch.
@@ -11,24 +12,35 @@
 # switch branches itself.
 #
 # Usage:
-#   DEPLOY_ADMIN_EMAIL=you@idilio.tv DEPLOY_ADMIN_PASSWORD='...' \
-#       ./scripts/deploy.sh
+#   ./scripts/deploy.sh
 #
-# Optional env vars:
+# DEPLOY_ADMIN_EMAIL / DEPLOY_ADMIN_PASSWORD are required. Put them in this
+# repo's own gitignored .env (same file docker compose already reads for
+# OPENAI_API_KEY etc. -- see .env.example) so nobody has to type or paste a
+# password inline on every deploy; falls back to the shell environment if
+# .env doesn't set them (e.g. injected by a CI secrets store).
+#
+# Optional env vars (shell or .env, same as above):
 #   DEPLOY_BASE_URL   (default derived from OPEN_WEBUI_PORT in .env, same as
 #                      docker-compose.yaml's own default -- see below)
 #   DEPLOY_MODELS     (default gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol)
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-: "${DEPLOY_ADMIN_EMAIL:?set DEPLOY_ADMIN_EMAIL -- the admin account seed.py signs in as}"
-: "${DEPLOY_ADMIN_PASSWORD:?set DEPLOY_ADMIN_PASSWORD}"
+if [ -f .env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env
+  set +a
+fi
 
-# docker-compose.yaml publishes the container on ${OPEN_WEBUI_PORT-3000}.
-# Read that the same place compose does (.env) instead of hardcoding a port
-# that's only correct on whichever host it was last hardcoded for.
-open_webui_port="$(grep -E '^OPEN_WEBUI_PORT=' .env 2>/dev/null | tail -1 | cut -d= -f2-)"
-DEPLOY_BASE_URL="${DEPLOY_BASE_URL:-http://localhost:${open_webui_port:-3000}}"
+: "${DEPLOY_ADMIN_EMAIL:?set DEPLOY_ADMIN_EMAIL in .env or the shell env -- the admin account seed.py signs in as}"
+: "${DEPLOY_ADMIN_PASSWORD:?set DEPLOY_ADMIN_PASSWORD in .env or the shell env}"
+
+# docker-compose.yaml publishes the container on ${OPEN_WEBUI_PORT-3000};
+# OPEN_WEBUI_PORT is already loaded from .env above, same as compose itself
+# reads it, instead of hardcoding a port that's only correct on one host.
+DEPLOY_BASE_URL="${DEPLOY_BASE_URL:-http://localhost:${OPEN_WEBUI_PORT:-3000}}"
 DEPLOY_MODELS="${DEPLOY_MODELS:-gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol}"
 
 echo "==> Pulling latest ($(git branch --show-current))..."
