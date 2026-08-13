@@ -378,12 +378,15 @@ def main() -> int:
     parser.add_argument(
         '--base-model-id',
         default='gpt-5.6-luna',
-        help='Existing model to attach the skill/tools/knowledge to directly '
-        '(no separate selectable model gets created).',
+        help='Comma-separated list of existing models to attach the '
+        'skill/tools/knowledge to directly (no separate selectable model '
+        'gets created). Every model listed gets the exact same attachment '
+        '-- there is no per-model variation.',
     )
     args = parser.parse_args()
 
     base_url = args.base_url.rstrip('/')
+    base_model_ids = [m.strip() for m in args.base_model_id.split(',') if m.strip()]
     session = requests.Session()
 
     authenticate(session, base_url, args.email, args.password)
@@ -393,11 +396,12 @@ def main() -> int:
     knowledge_id = get_or_create_knowledge(session, base_url)
     seed_knowledge_files(session, base_url, knowledge_id)
     seed_skill(session, base_url)
-    attach_to_base_model(session, base_url, args.base_model_id, knowledge_id)
+    for base_model_id in base_model_ids:
+        attach_to_base_model(session, base_url, base_model_id, knowledge_id)
 
-    print(f'\nDone. Select "{args.base_model_id}" like any other model in the '
-          'chat UI -- the skill loads contextually when what you ask for '
-          'matches its description, no separate model to pick.')
+    print(f'\nDone. Select any of {base_model_ids} like any other model in '
+          'the chat UI -- the skill loads contextually when what you ask '
+          'for matches its description, no separate model to pick.')
     return 0
 
 
