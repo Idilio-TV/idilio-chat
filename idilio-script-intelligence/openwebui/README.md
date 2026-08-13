@@ -18,22 +18,24 @@ nothing to select, it loads itself when relevant.
    cd idilio-script-intelligence/openwebui
    python3 seed.py --base-url http://localhost:3000 \
        --email you@idilio.tv --password '...' \
-       --base-model-id gpt-5.6-luna
+       --base-model-id gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol
    ```
    This registers the 2 custom tools (`script_guion`,
    `script_export_docx`), creates the "Idilio Script Intelligence"
    Knowledge collection, uploads the 3 reference `.md` files into it,
    registers `SKILL.md`'s content as a native OpenWebUI **Skill**
-   (see below), checks that subagents are enabled, and attaches the tools
-   + knowledge + skill directly to `--base-model-id` (default
-   `gpt-5.6-luna`) — merged into whatever's already attached there, not
-   overwritten. Safe to re-run after editing a tool file or
-   `SKILL.md`.
-3. That's it. Select `gpt-5.6-luna` (or whatever `--base-model-id` you
-   used) like any other model in the chat UI. **There is no separate
-   "Idilio Script Intelligence" model to pick** — the skill loads itself
-   contextually when what you ask for matches its description (see "Native
-   Skills" below), same model you'd use for anything else.
+   (see below), checks that subagents are enabled and the OpenAI
+   connection is on the Responses API, and attaches the tools + knowledge
+   + skill directly to every model listed in `--base-model-id`
+   (comma-separated; default `gpt-5.6-luna`) — merged into whatever's
+   already attached there, not overwritten. Safe to re-run after editing a
+   tool file or `SKILL.md`.
+3. That's it. Select `gpt-5.6-luna`, `gpt-5.6-terra`, `gpt-5.6-sol` (or
+   whatever `--base-model-id` list you used) like any other model in the
+   chat UI. **There is no separate "Idilio Script Intelligence" model to
+   pick** — the skill loads itself contextually on any of them when what
+   you ask for matches its description (see "Native Skills" below), same
+   model you'd use for anything else.
 4. If `seed.py` warned that subagents are off: **Admin Settings →
    Subagents → Enable Subagents.** (On a fresh instance this defaults to
    off; enable once, server-wide.)
