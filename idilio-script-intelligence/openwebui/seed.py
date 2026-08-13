@@ -289,12 +289,43 @@ def attach_to_base_model(
         'meta': meta,
         'params': model.get('params') or {},
         'access_grants': model.get('access_grants') or [],
+        # ModelForm defaults is_active to True when the key is omitted, which
+        # would silently re-enable a model ensure_only_active() disabled on a
+        # prior run -- carry the current value forward instead.
+        'is_active': model.get('is_active', True),
     }
     r = session.post(f'{base_url}/api/v1/models/model/update', json=payload)
     if not r.ok:
         raise RuntimeError(f'failed to update base model {base_model_id}: {r.status_code} {r.text}')
     print(f'attached to {base_model_id}: toolIds={meta["toolIds"]}, '
           f'knowledge={[k["name"] for k in meta["knowledge"]]}, skillIds={meta["skillIds"]}')
+
+
+def ensure_only_active(
+    session: requests.Session, base_url: str, base_model_ids: list[str], active_model_id: str
+) -> None:
+    """Disable every model in base_model_ids except active_model_id, so only
+    one shows up as selectable in the chat UI -- the others keep their
+    tools/knowledge/skill attached, just hidden until toggled back on by
+    hand (Admin Settings -> Models) or a future run with a different
+    active_model_id. Uses the dedicated toggle endpoint (flips current
+    state) rather than resending the full model, and only calls it when
+    the current state disagrees with the target."""
+    for base_model_id in base_model_ids:
+        want_active = base_model_id == active_model_id
+        resp = session.get(f'{base_url}/api/v1/models/model?id={base_model_id}')
+        if not resp.ok:
+            raise RuntimeError(
+                f'failed to read model {base_model_id} before toggling is_active: '
+                f'{resp.status_code} {resp.text}'
+            )
+        if resp.json().get('is_active') == want_active:
+            print(f'{base_model_id}: is_active already {want_active}')
+            continue
+        r = session.post(f'{base_url}/api/v1/models/model/toggle', params={'id': base_model_id})
+        if not r.ok:
+            raise RuntimeError(f'failed to toggle is_active for {base_model_id}: {r.status_code} {r.text}')
+        print(f'{base_model_id}: is_active -> {want_active}')
 
 
 OPENAI_RESPONSES_API_HOST = 'api.openai.com'
@@ -399,9 +430,22 @@ def main() -> int:
     for base_model_id in base_model_ids:
         attach_to_base_model(session, base_url, base_model_id, knowledge_id)
 
-    print(f'\nDone. Select any of {base_model_ids} like any other model in '
-          'the chat UI -- the skill loads contextually when what you ask '
-          'for matches its description, no separate model to pick.')
+    active_model_id = next((m for m in base_model_ids if 'terra' in m), None)
+    if active_model_id:
+        ensure_only_active(session, base_url, base_model_ids, active_model_id)
+        print(f'\nDone. {active_model_id} is the only one visible in the chat '
+              f'UI ({[m for m in base_model_ids if m != active_model_id]} stay '
+              'fully configured but hidden) -- the skill loads contextually '
+              "when what you ask for matches its description, no separate "
+              'model to pick.')
+    else:
+        print(
+            f"WARNING: no model in {base_model_ids} contains 'terra' -- skipping "
+            'is_active toggling, all of them stay as they were.'
+        )
+        print(f'\nDone. Select any of {base_model_ids} like any other model in '
+              'the chat UI -- the skill loads contextually when what you ask '
+              'for matches its description, no separate model to pick.')
     return 0
 
 

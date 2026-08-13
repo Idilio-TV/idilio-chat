@@ -1646,12 +1646,8 @@ if default_prompt_suggestions == []:
             'content': 'Ayúdame a desarrollar un argumento a partir de esta idea: [describe tu idea]. Quiero un planteamiento, nudo y desenlace, con el conflicto central bien definido.',
         },
         {
-            'title': ['Dame un logline', 'que resuma mi historia en una frase'],
-            'content': 'Tengo esta historia: [resume tu historia]. Ayúdame a convertirla en un logline claro de una sola frase que capture protagonista, conflicto y apuesta.',
-        },
-        {
-            'title': ['Estructura en tres actos', 'para organizar mi argumento'],
-            'content': 'Toma este argumento: [pega tu argumento] y organízalo en una estructura de tres actos, señalando los puntos de giro principales.',
+            'title': ['Estructura de 12 pasos', 'el camino del héroe para mi argumento'],
+            'content': 'Toma este argumento: [pega tu argumento] y organízalo en los 12 pasos del camino del héroe, señalando en qué capítulo o rango de capítulos ubicarías cada paso.',
         },
         {
             'title': ['Revisa mi guion', 'y dame una devolución honesta'],
