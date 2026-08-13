@@ -289,12 +289,74 @@ def attach_to_base_model(
         'meta': meta,
         'params': model.get('params') or {},
         'access_grants': model.get('access_grants') or [],
+        # ModelForm defaults is_active to True when the key is omitted, which
+        # would silently re-enable a model ensure_only_active() disabled on a
+        # prior run -- carry the current value forward instead.
+        'is_active': model.get('is_active', True),
     }
     r = session.post(f'{base_url}/api/v1/models/model/update', json=payload)
     if not r.ok:
         raise RuntimeError(f'failed to update base model {base_model_id}: {r.status_code} {r.text}')
     print(f'attached to {base_model_id}: toolIds={meta["toolIds"]}, '
           f'knowledge={[k["name"] for k in meta["knowledge"]]}, skillIds={meta["skillIds"]}')
+
+
+def ensure_only_active(session: requests.Session, base_url: str, active_model_id: str) -> None:
+    """Disable every model except active_model_id, so only one is
+    selectable in the chat UI -- not just gpt-5.6-luna/terra/sol, but every
+    raw upstream model the connection reports (gpt-4, gpt-5.x, etc., ~100+
+    on a real OpenAI connection). Most of those have no Models-table row at
+    all until something overrides them (confirmed: POST .../model/toggle
+    on a live-only id 401s, "model not found" -- the toggle endpoint only
+    flips an *existing* row), so disabling one for the first time means
+    creating a disabled override row directly rather than toggling.
+    Iterates /api/models (the live merged list, same one the chat picker
+    and admin Models page use) against /api/v1/models/base (every existing
+    base-style override row, id -> base_model_id None) to decide, per live
+    id, whether to leave it alone, toggle an existing row, or create one.
+    Idempotent: skips anything already in the right state."""
+    resp = session.get(f'{base_url}/api/models')
+    if not resp.ok:
+        raise RuntimeError(f'failed to list live models: {resp.status_code} {resp.text}')
+    live_ids = [m['id'] for m in resp.json().get('data', [])]
+
+    existing_resp = session.get(f'{base_url}/api/v1/models/base')
+    if not existing_resp.ok:
+        raise RuntimeError(
+            f'failed to list existing model overrides: {existing_resp.status_code} {existing_resp.text}'
+        )
+    existing = {m['id']: m for m in existing_resp.json()}
+
+    changed = 0
+    for model_id in live_ids:
+        want_active = model_id == active_model_id
+        model = existing.get(model_id)
+        if model:
+            if model.get('is_active') == want_active:
+                continue
+            r = session.post(f'{base_url}/api/v1/models/model/toggle', params={'id': model_id})
+            if not r.ok:
+                raise RuntimeError(f'failed to toggle is_active for {model_id}: {r.status_code} {r.text}')
+        elif not want_active:
+            r = session.post(
+                f'{base_url}/api/v1/models/create',
+                json={
+                    'id': model_id,
+                    'base_model_id': None,
+                    'name': model_id,
+                    'meta': {},
+                    'params': {},
+                    'access_grants': [],
+                    'is_active': False,
+                },
+            )
+            if not r.ok:
+                raise RuntimeError(f'failed to disable {model_id}: {r.status_code} {r.text}')
+        else:
+            continue  # want_active with no row -- attach_to_base_model already created/activated this one
+        print(f'{model_id}: is_active -> {want_active}')
+        changed += 1
+    print(f'is_active: only {active_model_id} enabled ({changed} of {len(live_ids)} live models changed)')
 
 
 OPENAI_RESPONSES_API_HOST = 'api.openai.com'
@@ -399,9 +461,20 @@ def main() -> int:
     for base_model_id in base_model_ids:
         attach_to_base_model(session, base_url, base_model_id, knowledge_id)
 
-    print(f'\nDone. Select any of {base_model_ids} like any other model in '
-          'the chat UI -- the skill loads contextually when what you ask '
-          'for matches its description, no separate model to pick.')
+    active_model_id = next((m for m in base_model_ids if 'terra' in m), None)
+    if active_model_id:
+        ensure_only_active(session, base_url, active_model_id)
+        print(f'\nDone. {active_model_id} is the only model visible anywhere in '
+              'the chat UI -- the skill loads contextually when what you ask '
+              'for matches its description, no separate model to pick.')
+    else:
+        print(
+            f"WARNING: no model in {base_model_ids} contains 'terra' -- skipping "
+            'is_active toggling, every model stays as it was.'
+        )
+        print(f'\nDone. Select any of {base_model_ids} like any other model in '
+              'the chat UI -- the skill loads contextually when what you ask '
+              'for matches its description, no separate model to pick.')
     return 0
 
 
