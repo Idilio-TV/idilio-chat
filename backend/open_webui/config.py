@@ -1642,31 +1642,36 @@ except Exception as e:
 if default_prompt_suggestions == []:
     default_prompt_suggestions = [
         {
-            'title': ['Help me study', 'vocabulary for a college entrance exam'],
-            'content': "Help me study vocabulary: write a sentence for me to fill in the blank, and I'll try to pick the correct option.",
+            'title': ['Crea un argumento nuevo', 'desde una idea o premisa'],
+            'content': 'Ayúdame a desarrollar un argumento a partir de esta idea: [describe tu idea]. Quiero un planteamiento, nudo y desenlace, con el conflicto central bien definido.',
         },
         {
-            'title': ['Give me ideas', "for what to do with my kids' art"],
-            'content': "What are 5 creative things I could do with my kids' art? I don't want to throw them away, but it's also so much clutter.",
+            'title': ['Dame un logline', 'que resuma mi historia en una frase'],
+            'content': 'Tengo esta historia: [resume tu historia]. Ayúdame a convertirla en un logline claro de una sola frase que capture protagonista, conflicto y apuesta.',
         },
         {
-            'title': ['Tell me a fun fact', 'about the Roman Empire'],
-            'content': 'Tell me a random fun fact about the Roman Empire',
+            'title': ['Estructura en tres actos', 'para organizar mi argumento'],
+            'content': 'Toma este argumento: [pega tu argumento] y organízalo en una estructura de tres actos, señalando los puntos de giro principales.',
         },
         {
-            'title': ['Show me a code snippet', "of a website's sticky header"],
-            'content': "Show me a code snippet of a website's sticky header in CSS and JavaScript.",
+            'title': ['Revisa mi guion', 'y dame una devolución honesta'],
+            'content': 'Aquí tienes un fragmento de mi guion: [pega el guion]. Revísalo como un lector profesional: dime qué funciona, qué no, y qué cambiarías del ritmo, diálogo y estructura.',
         },
         {
-            'title': [
-                'Explain options trading',
-                "if I'm familiar with buying and selling stocks",
-            ],
-            'content': "Explain options trading in simple terms if I'm familiar with buying and selling stocks.",
+            'title': ['Encuentra huecos de trama', 'en mi argumento actual'],
+            'content': 'Analiza este argumento: [pega tu argumento] y señala inconsistencias, cabos sueltos o huecos de lógica en la trama.',
         },
         {
-            'title': ['Overcome procrastination', 'give me tips'],
-            'content': 'Could you start by asking me about instances when I procrastinate the most and then give me some suggestions to overcome it?',
+            'title': ['Desarrolla un personaje', 'con un arco narrativo sólido'],
+            'content': 'Ayúdame a construir el arco de este personaje: [describe al personaje]. Quiero saber su motivación, conflicto interno y cómo cambia a lo largo de la historia.',
+        },
+        {
+            'title': ['Compara mi guion con el género', 'para ver si cumple las convenciones'],
+            'content': 'Este es mi guion o argumento: [pega tu texto]. Evalúa si cumple con las convenciones del género [indica el género] y qué le falta o le sobra.',
+        },
+        {
+            'title': ['Dame feedback de ritmo', 'escena por escena'],
+            'content': 'Aquí está mi guion: [pega el guion]. Revisa el ritmo escena por escena y dime dónde se estanca o se acelera demasiado la historia.',
         },
     ]
 
