@@ -7,6 +7,13 @@ IMPORTANT: DO NOT IMPORT THIS MODULE DIRECTLY IN OTHER PARTS OF THE CODEBASE.
 """
 
 from open_webui.tools.knowledge_fs import kb_exec  # noqa: F401 — re-exported
+from open_webui.tools.redshift import (  # noqa: F401 — re-exported
+    redshift_explain_query,
+    redshift_list_schemas,
+    redshift_list_tables_in_schema,
+    redshift_run_query,
+    redshift_test_connection,
+)
 
 import asyncio
 import json
