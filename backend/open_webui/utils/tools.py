@@ -76,11 +76,6 @@ from open_webui.tools.builtin import (
     query_knowledge_bases,
     query_knowledge_files,
     read_memory_path,
-    redshift_explain_query,
-    redshift_list_schemas,
-    redshift_list_tables_in_schema,
-    redshift_run_query,
-    redshift_test_connection,
     replace_memory_content,
     replace_note_content,
     search_calendar_events,
@@ -581,21 +576,6 @@ async def get_builtin_tools(
     # Time utilities - available for date calculations
     if is_builtin_tool_enabled('time'):
         builtin_functions.extend([get_current_timestamp, calculate_timestamp])
-
-    # Redshift warehouse tools - only when a connection is configured
-    if is_builtin_tool_enabled('redshift'):
-        from open_webui.env import REDSHIFT_URL
-
-        if REDSHIFT_URL:
-            builtin_functions.extend(
-                [
-                    redshift_test_connection,
-                    redshift_list_schemas,
-                    redshift_list_tables_in_schema,
-                    redshift_explain_query,
-                    redshift_run_query,
-                ]
-            )
 
     metadata = extra_params.get('__metadata__') or {}
     chat_files = metadata.get('files') or extra_params.get('__files__') or []
