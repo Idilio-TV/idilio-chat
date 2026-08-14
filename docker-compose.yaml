@@ -26,8 +26,11 @@ services:
     container_name: idilio-dashboard-sync
     working_dir: /app
     volumes:
-      - ./idilio-analytics/openwebui/sync_dashboard_knowledge.py:/app/sync_dashboard_knowledge.py:ro
-      - ${IDILIO_DASHBOARD_PATH:-../idilio-dashboard}:/mnt/idilio-dashboard:ro
+      # Bind-mount the containing directory, not the single .py file --
+      # single-file bind mounts break when the host file gets rewritten
+      # (new inode), which a plain editor save does.
+      - ./idilio-analytics/openwebui:/app:ro
+      - ${IDILIO_DASHBOARD_PATH:?set IDILIO_DASHBOARD_PATH in .env to an absolute path -- a relative default is ambiguous once this repo is checked out into a worktree}:/mnt/idilio-dashboard:ro
     environment:
       - 'OPENWEBUI_BASE_URL=http://open-webui:8080'
       - 'DEPLOY_ADMIN_EMAIL=${DEPLOY_ADMIN_EMAIL:?set DEPLOY_ADMIN_EMAIL in .env}'
