@@ -1,19 +1,25 @@
 """Bootstraps idilio-analytics against a running OpenWebUI instance via its
-REST API: registers the Redshift Analytics Tool, the Idilio Dashboard
-Reference Tool (live GitHub access to idilio-dashboard -- deliberately NOT a
-static knowledge-file snapshot, since that repo changes too often for a
-cached copy to stay trustworthy), and the Idilio Analytics Skill, then
-attaches all three to a base model -- same pattern as
+REST API: registers the Redshift Analytics Tool, the (empty, at first)
+Idilio Dashboard Reference Knowledge collection, and the Idilio Analytics
+Skill, then attaches all three to a base model -- same pattern as
 idilio-script-intelligence/openwebui/seed.py, just for the analytics/
 Redshift domain instead of script writing. Instance-wide settings
 (ENABLE_SUBAGENTS, the OpenAI Responses API switch, and disabling every
 model but the active one) are handled by that other seed.py -- this script
-only touches its own Tools/Skill and their attachment to base_model_id, so
-running both is safe and non-conflicting.
+only touches its own Tool/Knowledge/Skill and their attachment to
+base_model_id, so running both is safe and non-conflicting.
 
-Idempotent-ish: re-running updates the existing tools/skill rather than
+The Knowledge collection's actual *files* are NOT managed here -- this
+script only ensures the collection exists and is attached to the given
+models. Its content is kept current by sync_dashboard_knowledge.py, which
+runs continuously (idilio-dashboard-sync service in docker-compose.yaml),
+periodically re-reading the bind-mounted idilio-dashboard repo and
+replacing the collection's files -- deliberately not a one-time static
+snapshot, since that repo changes too often to trust a cached copy.
+
+Idempotent-ish: re-running updates the existing tool/skill rather than
 erroring on "already exists", so this is safe to re-run after editing
-tools/*.py or SKILL.md.
+tools/redshift.py or SKILL.md.
 
 Usage:
     python seed.py --base-url http://localhost:8080 \
@@ -39,8 +45,14 @@ TOOLS_DIR = HERE / 'tools'
 
 TOOL_FILES = [
     ('redshift', 'Redshift Analytics'),
-    ('dashboard_reference', 'Idilio Dashboard Reference'),
 ]
+
+KNOWLEDGE_NAME = 'Idilio Dashboard Reference'
+KNOWLEDGE_DESCRIPTION = (
+    'Reference material for company-wide metrics (revenue, MRR, retention, active users, '
+    'DAU/MAU) synced periodically from the idilio-dashboard repo -- kept current by '
+    'sync_dashboard_knowledge.py, not a one-time snapshot.'
+)
 
 SKILL_ID = 'idilio-analytics'
 SKILL_NAME = 'Idilio Analytics'
@@ -95,6 +107,24 @@ def seed_tools(session: requests.Session, base_url: str) -> None:
         print(f'{action} tool: {tool_id}')
 
 
+def get_or_create_knowledge(session: requests.Session, base_url: str) -> str:
+    existing = session.get(f'{base_url}/api/v1/knowledge/').json()['items']
+    for item in existing:
+        if item['name'] == KNOWLEDGE_NAME:
+            print(f"reusing knowledge collection: {item['id']}")
+            return item['id']
+
+    resp = session.post(
+        f'{base_url}/api/v1/knowledge/create',
+        json={'name': KNOWLEDGE_NAME, 'description': KNOWLEDGE_DESCRIPTION},
+    )
+    if not resp.ok:
+        raise RuntimeError(f'failed to create knowledge collection: {resp.status_code} {resp.text}')
+    knowledge_id = resp.json()['id']
+    print(f'created knowledge collection: {knowledge_id}')
+    return knowledge_id
+
+
 def seed_skill(session: requests.Session, base_url: str) -> None:
     content = (HERE / 'SKILL.md').read_text(encoding='utf-8')
     payload = {
@@ -116,10 +146,12 @@ def seed_skill(session: requests.Session, base_url: str) -> None:
     print(f'{action} skill: {SKILL_ID}')
 
 
-def attach_to_base_model(session: requests.Session, base_url: str, base_model_id: str) -> None:
-    """Attach the tools and the skill directly to base_model_id's own meta
-    -- merges into whatever's already there (e.g. idilio-script-intelligence's
-    own attachments) instead of overwriting."""
+def attach_to_base_model(
+    session: requests.Session, base_url: str, base_model_id: str, knowledge_id: str
+) -> None:
+    """Attach the tool, the knowledge collection, and the skill directly to
+    base_model_id's own meta -- merges into whatever's already there (e.g.
+    idilio-script-intelligence's own attachments) instead of overwriting."""
     resp = session.get(f'{base_url}/api/v1/models/model?id={base_model_id}')
     if not resp.ok:
         live_models = session.get(f'{base_url}/api/models')
@@ -160,6 +192,11 @@ def attach_to_base_model(session: requests.Session, base_url: str, base_model_id
     tool_ids.update(t_id for t_id, _ in TOOL_FILES)
     meta['toolIds'] = sorted(tool_ids)
 
+    knowledge = meta.get('knowledge') or []
+    if not any(k.get('id') == knowledge_id for k in knowledge):
+        knowledge.append({'id': knowledge_id, 'name': KNOWLEDGE_NAME, 'type': 'collection'})
+    meta['knowledge'] = knowledge
+
     skill_ids = set(meta.get('skillIds') or [])
     skill_ids.add(SKILL_ID)
     meta['skillIds'] = sorted(skill_ids)
@@ -176,7 +213,8 @@ def attach_to_base_model(session: requests.Session, base_url: str, base_model_id
     r = session.post(f'{base_url}/api/v1/models/model/update', json=payload)
     if not r.ok:
         raise RuntimeError(f'failed to update base model {base_model_id}: {r.status_code} {r.text}')
-    print(f'attached to {base_model_id}: toolIds={meta["toolIds"]}, skillIds={meta["skillIds"]}')
+    print(f'attached to {base_model_id}: toolIds={meta["toolIds"]}, '
+          f'knowledge={[k["name"] for k in meta["knowledge"]]}, skillIds={meta["skillIds"]}')
 
 
 def main() -> int:
@@ -187,7 +225,7 @@ def main() -> int:
     parser.add_argument(
         '--base-model-id',
         default='gpt-5.6-luna',
-        help='Comma-separated list of existing models to attach the tools/skill '
+        help='Comma-separated list of existing models to attach the tool/knowledge/skill '
         'to directly. Every model listed gets the exact same attachment.',
     )
     args = parser.parse_args()
@@ -198,13 +236,15 @@ def main() -> int:
 
     authenticate(session, base_url, args.email, args.password)
     seed_tools(session, base_url)
+    knowledge_id = get_or_create_knowledge(session, base_url)
     seed_skill(session, base_url)
     for base_model_id in base_model_ids:
-        attach_to_base_model(session, base_url, base_model_id)
+        attach_to_base_model(session, base_url, base_model_id, knowledge_id)
 
     print(f'\nDone. {SKILL_NAME} is attached to {base_model_ids} -- the skill loads '
           'contextually when what you ask for matches its description, no separate '
-          'model to pick.')
+          'model to pick. Knowledge collection content is populated/refreshed by the '
+          'idilio-dashboard-sync service, not this script.')
     return 0
 
 

@@ -17,9 +17,26 @@ services:
       - 'GOOGLE_DRIVE_CLIENT_ID=${GOOGLE_DRIVE_CLIENT_ID-}'
       - 'GOOGLE_DRIVE_API_KEY=${GOOGLE_DRIVE_API_KEY-}'
       - 'REDSHIFT_URL=${REDSHIFT_URL-}'
-      - 'GITHUB_TOKEN=${GITHUB_TOKEN-}'
     extra_hosts:
       - host.docker.internal:host-gateway
+    restart: unless-stopped
+
+  idilio-dashboard-sync:
+    image: python:3.11-slim
+    container_name: idilio-dashboard-sync
+    working_dir: /app
+    volumes:
+      - ./idilio-analytics/openwebui/sync_dashboard_knowledge.py:/app/sync_dashboard_knowledge.py:ro
+      - ${IDILIO_DASHBOARD_PATH:-../idilio-dashboard}:/mnt/idilio-dashboard:ro
+    environment:
+      - 'OPENWEBUI_BASE_URL=http://open-webui:8080'
+      - 'DEPLOY_ADMIN_EMAIL=${DEPLOY_ADMIN_EMAIL:?set DEPLOY_ADMIN_EMAIL in .env}'
+      - 'DEPLOY_ADMIN_PASSWORD=${DEPLOY_ADMIN_PASSWORD:?set DEPLOY_ADMIN_PASSWORD in .env}'
+      - 'MOUNT_PATH=/mnt/idilio-dashboard'
+      - 'SYNC_INTERVAL_SECONDS=${IDILIO_DASHBOARD_SYNC_INTERVAL_SECONDS-3600}'
+    command: sh -c "pip install --quiet --no-cache-dir requests && python3 sync_dashboard_knowledge.py"
+    depends_on:
+      - open-webui
     restart: unless-stopped
 
 volumes:
