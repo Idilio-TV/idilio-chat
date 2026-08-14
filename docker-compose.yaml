@@ -36,7 +36,8 @@ services:
       - 'SYNC_INTERVAL_SECONDS=${IDILIO_DASHBOARD_SYNC_INTERVAL_SECONDS-3600}'
     command: sh -c "pip install --quiet --no-cache-dir requests && python3 sync_dashboard_knowledge.py"
     depends_on:
-      - open-webui
+      open-webui:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

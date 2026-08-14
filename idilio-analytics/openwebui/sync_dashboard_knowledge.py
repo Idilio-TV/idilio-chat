@@ -136,13 +136,16 @@ def main() -> int:
     mount_path = os.environ.get('MOUNT_PATH', '/mnt/idilio-dashboard')
     interval = int(os.environ.get('SYNC_INTERVAL_SECONDS', '3600'))
 
+    FAILURE_RETRY_SECONDS = 60
+
     while True:
         try:
             sync_once(base_url, email, password, mount_path)
+            time.sleep(interval)
         except Exception:
-            print('sync failed:', file=sys.stderr)
+            print('sync failed, retrying sooner than the normal interval:', file=sys.stderr)
             traceback.print_exc()
-        time.sleep(interval)
+            time.sleep(FAILURE_RETRY_SECONDS)
 
 
 if __name__ == '__main__':
