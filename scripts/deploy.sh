@@ -78,4 +78,12 @@ echo "==> Seeding skill/tools/knowledge/settings on: $DEPLOY_MODELS..."
     --base-model-id "$DEPLOY_MODELS"
 )
 
+echo "==> Seeding Idilio Analytics skill/tools on: $DEPLOY_MODELS..."
+(
+  cd idilio-analytics/openwebui
+  python3 seed.py --base-url "$DEPLOY_BASE_URL" \
+    --email "$DEPLOY_ADMIN_EMAIL" --password "$DEPLOY_ADMIN_PASSWORD" \
+    --base-model-id "$DEPLOY_MODELS"
+)
+
 echo "==> Deploy complete."
