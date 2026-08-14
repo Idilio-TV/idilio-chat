@@ -35,6 +35,7 @@ _BLOCKED_KEYWORDS = (
     'VACUUM',
     'MERGE',
     'CALL',
+    'INTO',
 )
 _BLOCKED_KEYWORDS_RE = re.compile(r'\b(' + '|'.join(_BLOCKED_KEYWORDS) + r')\b', re.IGNORECASE)
 

@@ -52,6 +52,15 @@ def test_blocks_grant():
         raise AssertionError('expected ReadOnlySQLError for GRANT')
 
 
+def test_blocks_select_into():
+    try:
+        _ensure_read_only_sql('SELECT * INTO new_table FROM public.purchases')
+    except ReadOnlySQLError:
+        pass
+    else:
+        raise AssertionError('expected ReadOnlySQLError for SELECT INTO')
+
+
 if __name__ == '__main__':
     test_allows_plain_select()
     test_allows_select_with_update_like_identifier()
@@ -59,4 +68,5 @@ if __name__ == '__main__':
     test_blocks_drop_table()
     test_blocks_delete_case_insensitive()
     test_blocks_grant()
+    test_blocks_select_into()
     print('OK: all redshift guard checks passed')
