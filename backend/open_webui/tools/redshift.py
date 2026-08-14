@@ -9,6 +9,7 @@ uses (Postgres-compatible).
 import json
 import logging
 import re
+from typing import Optional
 
 import psycopg
 
@@ -45,12 +46,31 @@ class ReadOnlySQLError(ValueError):
 
 
 def _ensure_read_only_sql(query: str) -> None:
-    """Raise ReadOnlySQLError if query contains a write/DDL keyword as a whole word.
+    """Raise ReadOnlySQLError if query contains a write/DDL keyword as a whole word,
+    stacks multiple statements, or starts with ANALYZE.
 
     # ponytail: coarse whole-word keyword blocklist, not a real SQL parser — a column
     # literally named e.g. "update" would false-positive. Upgrade to a real SQL parser
     # (e.g. sqlglot) if that ever bites in practice.
     """
+    stripped = query.strip()
+    # Allow exactly one trailing semicolon (LLMs commonly emit one), but reject
+    # anything else containing a ';' — that's statement stacking, e.g.
+    # "SELECT 1; SELECT * FROM secrets", which no single blocked keyword catches.
+    body = stripped[:-1] if stripped.endswith(';') else stripped
+    if ';' in body:
+        raise ReadOnlySQLError(
+            'Query contains multiple statements separated by ";". '
+            'Only a single read-only SELECT/EXPLAIN query is permitted.'
+        )
+
+    first_word_match = re.match(r'^\s*([A-Za-z_]+)', query)
+    if first_word_match and first_word_match.group(1).upper() == 'ANALYZE':
+        raise ReadOnlySQLError(
+            'Query starts with ANALYZE, which is not permitted (EXPLAIN ANALYZE would '
+            'actually execute the query instead of just planning it).'
+        )
+
     match = _BLOCKED_KEYWORDS_RE.search(query)
     if match:
         raise ReadOnlySQLError(
@@ -153,7 +173,10 @@ async def redshift_explain_query(query: str) -> str:
         async with await _connect() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(f'EXPLAIN {query}')
-                rows = await cur.fetchall()
+                # ponytail: EXPLAIN output is normally a handful of plan lines, so a
+                # client-side cursor is fine here — this fetchmany cap is just a
+                # backstop in case the keyword blocklist above ever has a hole.
+                rows = await cur.fetchmany(REDSHIFT_MAX_ROWS)
         return json.dumps({'plan': [r[0] for r in rows]})
     except ReadOnlySQLError as e:
         return json.dumps({'error': str(e)})
@@ -162,7 +185,7 @@ async def redshift_explain_query(query: str) -> str:
         return json.dumps({'error': str(e)})
 
 
-async def redshift_run_query(query: str, max_rows: int = None) -> str:
+async def redshift_run_query(query: str, max_rows: Optional[int] = None) -> str:
     """
     Run a read-only SQL query against the Redshift warehouse and return the results. Only
     SELECT-style queries are allowed — INSERT/UPDATE/DELETE/DROP/ALTER/etc. are rejected.
@@ -180,7 +203,13 @@ async def redshift_run_query(query: str, max_rows: int = None) -> str:
         limit = REDSHIFT_MAX_ROWS if max_rows is None else max(1, min(max_rows, REDSHIFT_MAX_ROWS))
 
         async with await _connect() as conn:
-            async with conn.cursor() as cur:
+            # Server-side (named) cursor: fetchmany() below then only pulls `limit + 1`
+            # rows from Redshift instead of buffering the entire result set client-side
+            # first. withhold=True is required — on this autocommit connection a plain
+            # named cursor fails outright ("DECLARE CURSOR can only be used in
+            # transaction blocks"), since a non-held cursor is dropped the instant its
+            # declaring statement's implicit autocommit transaction ends.
+            async with conn.cursor(name='redshift_run_query', withhold=True) as cur:
                 await cur.execute(query)
                 columns = [desc.name for desc in cur.description] if cur.description else []
                 rows = await cur.fetchmany(limit + 1)

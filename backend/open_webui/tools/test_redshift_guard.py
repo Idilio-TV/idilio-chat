@@ -61,6 +61,28 @@ def test_blocks_select_into():
         raise AssertionError('expected ReadOnlySQLError for SELECT INTO')
 
 
+def test_blocks_multiple_statements():
+    try:
+        _ensure_read_only_sql('SELECT 1; SELECT * FROM public.credit_cards')
+    except ReadOnlySQLError:
+        pass
+    else:
+        raise AssertionError('expected ReadOnlySQLError for stacked statements')
+
+
+def test_blocks_analyze_prefix():
+    try:
+        _ensure_read_only_sql('ANALYZE SELECT * FROM public.credit_cards')
+    except ReadOnlySQLError:
+        pass
+    else:
+        raise AssertionError('expected ReadOnlySQLError for ANALYZE prefix')
+
+
+def test_allows_single_trailing_semicolon():
+    _ensure_read_only_sql('SELECT 1;')
+
+
 if __name__ == '__main__':
     test_allows_plain_select()
     test_allows_select_with_update_like_identifier()
@@ -69,4 +91,7 @@ if __name__ == '__main__':
     test_blocks_delete_case_insensitive()
     test_blocks_grant()
     test_blocks_select_into()
+    test_blocks_multiple_statements()
+    test_blocks_analyze_prefix()
+    test_allows_single_trailing_semicolon()
     print('OK: all redshift guard checks passed')
