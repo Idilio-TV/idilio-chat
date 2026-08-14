@@ -325,6 +325,22 @@ except (ValueError, TypeError):
 
 DATABASE_ENABLE_SQLITE_WAL = os.getenv('DATABASE_ENABLE_SQLITE_WAL', 'True').lower() == 'true'
 
+REDSHIFT_URL = os.getenv('REDSHIFT_URL')
+if REDSHIFT_URL and 'postgres://' in REDSHIFT_URL:
+    REDSHIFT_URL = REDSHIFT_URL.replace('postgres://', 'postgresql://')
+
+_redshift_timeout_raw = os.getenv('REDSHIFT_STATEMENT_TIMEOUT_MS', '30000')
+try:
+    REDSHIFT_STATEMENT_TIMEOUT_MS = int(_redshift_timeout_raw) if _redshift_timeout_raw else 30000
+except (ValueError, TypeError):
+    REDSHIFT_STATEMENT_TIMEOUT_MS = 30000
+
+_redshift_max_rows_raw = os.getenv('REDSHIFT_MAX_ROWS', '200')
+try:
+    REDSHIFT_MAX_ROWS = int(_redshift_max_rows_raw) if _redshift_max_rows_raw else 200
+except (ValueError, TypeError):
+    REDSHIFT_MAX_ROWS = 200
+
 # SQLite PRAGMA tuning — these defaults are optimised for WAL-mode web-server
 # workloads.  Each can be overridden via its environment variable.
 # Set any value to an empty string to skip that PRAGMA entirely.
