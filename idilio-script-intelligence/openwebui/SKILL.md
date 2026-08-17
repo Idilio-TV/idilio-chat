@@ -45,16 +45,20 @@ las llamadas `delegate_task` de un mismo turno, sin importar `background`
 de inmediato en vez de esperar el resultado real, y este flujo necesita
 los resultados reales de las 2-3 alternativas ya listos para presentarlos
 juntos en la misma respuesta. `background: true` rompería justo eso.
-Ejemplo para la Etapa 1:
+Ejemplo para la Etapa 1 (Argumento):
 
-> task: "Eres guionista de melodrama para shows verticales cortos. Propón
-> UN protagonista para este universo. Devuelve: 1) nombre y una línea de
-> descripción, 2) propósito central, 3) obstáculo/antagonista central, 4)
-> por qué este personaje es la mejor puerta de entrada al 'oculto moral' de
-> la historia. No escribas escenas todavía."
+> task: "Eres guionista de melodrama para shows verticales cortos, estilo
+> Idilio. Escribe: 1) PLOT ARGUMENTAL: un párrafo de 60-120 palabras
+> presentando un boceto de protagonista SIN NOMBRE (una línea describiéndolo
+> por su rol/situación, ej. 'una joven enfermera que oculta la deuda de su
+> hermana' — todavía no se ha elegido un personaje, eso pasa en la Etapa 2),
+> su propósito amoroso central, y el obstáculo/villano. Cierra
+> opcionalmente con una pregunta retórica tipo gancho. 2) HOOK DE ARRANQUE:
+> 1-2 líneas describiendo la primera imagen o línea de diálogo del capítulo
+> 1, diseñada para que nadie abandone en los primeros segundos."
 > context: "Universo: {universo}. Contexto del libretista: {respuestas}."
 
-Presenta las alternativas devueltas lado a lado; el libretista elige o
+Presenta las 3 alternativas devueltas lado a lado; el libretista elige o
 combina.
 
 # Tools disponibles
