@@ -248,40 +248,61 @@ preguntas"):
    Menos de 10 (prueba o show corto) — "capítulo 10" pasa a ser el último
    capítulo del show en el resto de esta skill. Otro: escribe el número.
 
-Llama `write_guion` con el documento inicial. Resume en una línea: "✅
-Etapa 0 lista — idea, universo, título y capítulos definidos. Siguiente:
-Etapa 1 — Personaje y premisa."
+Llama `write_guion` con el documento inicial. Siguiente etapa: Etapa 1 —
+Argumento y hook.
 
-**Etapa 1 — Personaje y premisa.** Pregunta quién sufre más en este
-universo, de quién quiere que el público se enamore, si el protagonista es
-más víctima o protector. Usa `delegate_task` x3 (ver arriba) pidiendo una
-propuesta de protagonista cada uno (nombre, propósito, obstáculo, por qué
-es la mejor puerta al "oculto moral"). El libretista elige o combina;
-guarda el resultado con `write_guion`.
+**Etapa 1 — Argumento y hook.** Todavía no hay ningún personaje elegido —
+el argumento se define primero, el reparto se construye después para que
+encaje con él (Etapa 2). Agrupa estas 3 sub-preguntas en un solo mensaje
+multi-parte (ver "Cómo hacer preguntas"): el conflicto melodramático
+central (piensa en un propósito amoroso: qué amor se busca, se protege, o
+se pierde), quién es el villano y qué necesita conseguir para ganar, y qué
+necesita ver o saber el público que el protagonista todavía no sabe (o al
+revés). Con las respuestas, `delegate_task` x3 (ver arriba) pidiendo cada
+uno PLOT ARGUMENTAL (60-120 palabras, con un boceto de protagonista SIN
+NOMBRE — descrito por su rol/situación, ej. "una joven enfermera que oculta
+la deuda de su hermana", ya que el personaje se elige recién en la Etapa
+2) + HOOK de arranque (1-2 líneas, la primera imagen o línea del capítulo
+1). Presenta las 3 alternativas; el libretista elige o combina. Guarda el
+resultado con `write_guion` en `## Plot Argumental`. Siguiente etapa:
+Etapa 2 — Personajes.
 
-**Etapa 2 — Argumento y hook.** Pregunta el conflicto melodramático
-central, quién es el villano, qué sabe el público que el protagonista no
-sabe. `delegate_task` x3 pidiendo plot argumental (60-120 palabras) + hook
-de arranque cada uno. Guarda la elección.
+**Etapa 2 — Personajes.** Con el argumento ya definido, agrupa estas
+sub-preguntas en 2 mensajes multi-parte (ver "Cómo hacer preguntas"):
 
-**Etapa 3 — Reparto y polarización moral.** Pregunta quién protege al
-protagonista, qué gesto delata al villano, si hay un falso aliado. No hace
-falta `delegate_task` por defecto. Si el libretista pide explícitamente
-alternativas de villano o aliado, ofrece 2-3 propuestas (un `delegate_task`
-por propuesta, o generadas directamente por ti si son variaciones
-menores). Guarda el reparto completo, marcando quién es bueno/malo y su
-gesto delator.
+- Grupo A (protagonista): quién sufre más en este universo, de quién
+  quieres que el público se enamore o con quién quieres que sufra, si el
+  protagonista es más víctima, más protector, o ambos a la vez.
+- Grupo B (reparto): quién protege al protagonista, qué gesto o rasgo
+  delata al villano ante el público aunque los demás personajes todavía no
+  lo vean (esto es el "cuerpo como prueba" de `brooks-theory.md` —
+  explícaselo brevemente si el libretista no está familiarizado), si hay
+  algún falso aliado (alguien que parece bueno pero no lo es, o al revés).
 
-**Etapa 4 — Estructura de 12 pasos.** Usa `structure-12-pasos.md`.
+Con las respuestas de ambos grupos, `delegate_task` x3 en paralelo (mismo
+mecanismo de fan-out, ver "Alternativas en paralelo"), cada uno pidiendo el
+REPARTO COMPLETO como una tabla markdown, con una fila por personaje
+(Protagonista, Villano, Aliado, y Falso aliado si aplica) y estas columnas:
+Rol, Nombre, Propósito, Obstáculo, Oculto moral / rasgo delator,
+Polarización (buena/mala). Cada propuesta debe encajar con el plot
+argumental ya elegido en la Etapa 1. Presenta las 3 tablas lado a lado; el
+libretista puede elegir una completa o mezclar filas entre tablas (ej.
+"protagonista de la tabla 2, villano de la tabla 1"). Guarda el reparto
+final combinado con `write_guion` en `## Personajes`, marcando para cada
+personaje si es claramente bueno o malo y cuál es su gesto delator.
+Siguiente etapa: Etapa 3 — Estructura de 12 pasos.
+
+**Etapa 3 — Estructura de 12 pasos.** Usa `structure-12-pasos.md`.
 Pregunta paso a paso qué ocurre en cada uno de los 12 pasos. Define la
-cuestión central; deja giros/clímax pendientes para la Etapa 5.
+cuestión central; deja giros/clímax pendientes para la Etapa 4.
 
-**Etapa 5 — Giros y climax.** Pregunta qué información oculta cambia todo
-al revelarse, cómo se resuelve todo. `delegate_task` x2 o x3 pidiendo cada
-uno un paquete de 2-3 giros + clímax + desenlace (giros ganados, no
-forzados; clímax con un "tableau").
+**Etapa 4 — Giros y climax.** Agrupa estas 2 sub-preguntas en un solo
+mensaje multi-parte: qué información oculta cambia todo al revelarse, y
+cómo se resuelve todo al final. `delegate_task` x2 o x3 pidiendo cada uno
+un paquete de 2-3 giros + clímax + desenlace (giros ganados, no forzados;
+clímax con un "tableau").
 
-**Etapa 6 — Escritura por capítulo.** Antes de anexar, llama
+**Etapa 5 — Escritura por capítulo.** Antes de anexar, llama
 `chapter_exists`. Si ya existe, pregunta si se reemplaza (y renumera
 escenas siguientes si cambia la cantidad) o si el número está mal. Si no
 existe: pregunta el objetivo dramático y el gancho de cierre; si se piden
