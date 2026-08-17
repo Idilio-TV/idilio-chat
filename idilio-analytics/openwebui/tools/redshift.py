@@ -107,7 +107,15 @@ class Tools:
             connect_timeout=10,
             options=(
                 f'-c statement_timeout={self.valves.STATEMENT_TIMEOUT_MS} '
-                '-c default_transaction_read_only=on'
+                '-c default_transaction_read_only=on '
+                # Redshift reports its server encoding as "UNICODE" rather than
+                # Postgres's "UTF8" -- psycopg3 doesn't recognize that name and
+                # raises NotSupportedError("codec not available in Python:
+                # 'UNICODE'") the moment it needs to decode anything. Forcing
+                # client_encoding here sidesteps the lookup entirely (confirmed
+                # against the real warehouse: connection fails without this,
+                # succeeds with it).
+                '-c client_encoding=UTF8'
             ),
         )
 
@@ -219,13 +227,19 @@ class Tools:
             limit = cap if max_rows is None else max(1, min(max_rows, cap))
 
             async with await self._connect() as conn:
-                # Server-side (named) cursor: fetchmany() below then only pulls `limit + 1`
-                # rows from Redshift instead of buffering the entire result set client-side
-                # first. withhold=True is required -- on this autocommit connection a plain
-                # named cursor fails outright ("DECLARE CURSOR can only be used in
-                # transaction blocks"), since a non-held cursor is dropped the instant its
-                # declaring statement's implicit autocommit transaction ends.
-                async with conn.cursor(name='redshift_run_query', withhold=True) as cur:
+                # ponytail: a named/WITH HOLD server-side cursor would let fetchmany()
+                # pull only `limit + 1` rows from the server instead of buffering the
+                # whole result set client-side first -- tried that, but it fails on
+                # real Redshift ('relation "pg_catalog.pg_cursors" does not exist':
+                # Redshift's Postgres 8.0.2 lineage doesn't have the catalog view
+                # psycopg3 needs for WITH HOLD cursor bookkeeping). Confirmed live
+                # against the warehouse, not just a vanilla-Postgres test cluster.
+                # Falling back to a plain client-side cursor: correct and capped at
+                # the app layer via fetchmany() below, just not capped at the
+                # network-transfer layer. Upgrade path if that ever matters: a
+                # DECLARE CURSOR inside an explicit (non-autocommit) transaction,
+                # which Redshift does support, instead of WITH HOLD.
+                async with conn.cursor() as cur:
                     await cur.execute(query)
                     columns = [desc.name for desc in cur.description] if cur.description else []
                     rows = await cur.fetchmany(limit + 1)
