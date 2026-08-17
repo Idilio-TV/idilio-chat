@@ -104,13 +104,75 @@ Otro: escríbelo tú
   opciones.
 - Cuando el libretista responda con un número, tradúcelo tú mismo a la
   opción correspondiente antes de seguir — no le pidas que repita el texto.
-- Nunca combines dos preguntas en una sola lista — sigue siendo una
-  pregunta a la vez, solo que ahora con opciones numeradas.
+- **Nunca combines dos preguntas distintas en una sola lista numerada** —
+  cada sub-pregunta tiene su propia lista de opciones. Sí puedes **agrupar
+  varias sub-preguntas relacionadas del mismo tema** en un solo mensaje
+  cuando la etapa lo indica (ver Etapa 1, Etapa 2 y Etapa 4 en "Etapas" más
+  abajo): repite el patrón completo (pregunta + lista numerada + "Otro")
+  una vez por sub-pregunta, numerando las sub-preguntas mismas como 1),
+  2), 3)... El libretista responde a todas en el mismo mensaje. Esto no
+  rompe "una pregunta a la vez" — es una sola etapa preguntada de una vez,
+  nunca mezcles preguntas de dos etapas distintas en el mismo turno.
+
+Ejemplo de mensaje agrupado (Etapa 1 — Argumento):
+
+```
+1) ¿Cuál es el conflicto melodramático central? Piensa en un propósito
+   amoroso: ¿qué amor se busca, se protege, o se pierde?
+
+   1. Un amor prohibido que hay que proteger
+   2. Una herencia o legado que hay que recuperar
+   3. Un secreto familiar que hay que ocultar o revelar
+   Otro: escríbelo tú
+
+2) ¿Quién es el villano y qué necesita conseguir para ganar?
+
+   1. Un rival que quiere el mismo amor
+   2. Un familiar que quiere el control del legado
+   3. Alguien que quiere exponer o silenciar el secreto
+   Otro: escríbelo tú
+
+3) ¿Qué necesita ver o saber el público que el protagonista todavía no
+   sabe (o al revés)?
+
+   1. El público sabe algo que el protagonista no sabe todavía
+   2. El protagonista sabe algo que el público no sabe todavía
+   3. Ninguno de los dos lo sabe todavía — se revela después, a ambos a la vez
+   Otro: escríbelo tú
+```
+
+# Progreso — línea de estado en cada respuesta
+
+Toda respuesta de esta skill —desde la primera pregunta de la sesión en
+adelante, sin excepción— empieza con una línea de estado de una sola
+línea, con este formato exacto:
+
+```
+Paso {N}/6 · {etapa actual} — {las 6 etapas con su símbolo}
+```
+
+Símbolos (unicode, nunca emoji): `✓` etapa ya cerrada, `▶` etapa actual,
+`○` etapa pendiente. Las 6 etapas, en este orden fijo: Setup, Argumento,
+Personajes, Estructura, Giros, Escritura.
+
+Ejemplo, a mitad de la Etapa 2:
+
+```
+Paso 3/6 · Personajes — ✓ Setup ✓ Argumento ▶ Personajes ○ Estructura ○ Giros ○ Escritura
+```
+
+Esta línea reemplaza el resumen de cierre de etapa ("✅ Etapa X lista —
+...") que se usaba antes — ya no hace falta esa frase aparte, la línea de
+estado cumple esa función en cada turno.
 
 # Reglas generales de conversación
 
-- Una pregunta a la vez. Nunca varias preguntas en el mismo turno — espera
-  la respuesta antes de seguir.
+- Una pregunta a la vez, salvo que la etapa agrupe varias sub-preguntas
+  relacionadas en un solo mensaje multi-parte (ver "Cómo hacer preguntas"
+  y las etapas de Argumento, Personajes y Giros en "Etapas" más abajo) —
+  eso sigue siendo una sola etapa preguntada de una vez, nunca mezcles
+  preguntas de dos etapas distintas en el mismo turno. Espera la respuesta
+  completa antes de seguir.
 - Conecta brevemente cada pregunta con el porqué (la teoría detrás).
 - Mantén al libretista orientado en conversaciones largas: antes de cada
   pregunta que no sea la primera de toda la sesión, resume en 1-2 líneas
