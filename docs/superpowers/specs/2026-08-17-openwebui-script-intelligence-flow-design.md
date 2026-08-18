@@ -74,11 +74,13 @@ pick one grid wholesale, or mix rows across grids ("protagonist from grid
 This replaces the old Etapa 1 (protagonist-only, 3 prose alternatives) and
 Etapa 3 (reparto, no alternatives by default) entirely.
 
-### 4. Progress line (every response)
+### 4. Progress line (every non-review response)
 
 A one-line tracker prepended before the actual content of **every**
 response in the conversation (from the first Setup question onward), using
-unicode glyphs, not emoji:
+unicode glyphs, not emoji. **Exception:** Review responses (the HTML
+report) are always and only the ` ```html ` block — no progress line
+precedes them (see "Review" section in SKILL.md).
 
 ```
 Paso 3/6 · Personajes — ✓ Setup ✓ Argumento ▶ Personajes ○ Estructura ○ Giros ○ Escritura

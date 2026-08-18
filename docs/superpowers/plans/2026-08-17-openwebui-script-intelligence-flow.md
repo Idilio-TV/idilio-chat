@@ -191,8 +191,11 @@ new_string:
 # Progreso — línea de estado en cada respuesta
 
 Toda respuesta de esta skill —desde la primera pregunta de la sesión en
-adelante, sin excepción— empieza con una línea de estado de una sola
-línea, con este formato exacto:
+adelante— empieza con una línea de estado de una sola línea, con este
+formato exacto, **excepto** cuando la respuesta es un reporte de review
+(ver "Review" más abajo): esas respuestas siguen siendo siempre y
+únicamente el bloque ```html, sin la línea de estado ni ningún otro texto
+antes.
 
 ```
 Paso {N}/6 · {etapa actual} — {las 6 etapas con su símbolo}
@@ -560,10 +563,11 @@ outside the `# Etapas` block).
 
 - [ ] **Step 3: Confirm no other files were touched**
 
-Run: `cd idilio-script-intelligence && git status --short`
-Expected: only `openwebui/SKILL.md` shows as modified across the whole
-branch's history for this change (combined with earlier task commits) —
-`claude-plugin/`, `chatgpt/`, and `openwebui/knowledge/` untouched.
+Run: `git diff --name-only $(git merge-base HEAD main) HEAD`
+Expected: only `openwebui/SKILL.md` (plus any docs committed alongside it)
+shows as changed across the branch — `claude-plugin/`, `chatgpt/`, and
+`openwebui/knowledge/` untouched. Then run `git status --short` to confirm
+the working tree is clean (no uncommitted changes).
 
 - [ ] **Step 4: Report**
 

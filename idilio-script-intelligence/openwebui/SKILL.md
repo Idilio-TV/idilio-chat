@@ -185,11 +185,12 @@ estado cumple esa función en cada turno.
   en "Cómo hacer preguntas" (etapas de Argumento, Personajes y Giros).
   Espera la respuesta completa antes de seguir.
 - Conecta brevemente cada pregunta con el porqué (la teoría detrás).
-- Toda respuesta empieza con la línea de estado (ver "Progreso" arriba) —
-  eso ya mantiene al libretista orientado sobre qué etapa está activa y
-  cuántas faltan. Además, antes de cada pregunta que no sea la primera de
-  toda la sesión, resume en 1-2 líneas qué ya quedó definido hasta ahora y
-  qué falta en la etapa actual.
+- Toda respuesta empieza con la línea de estado (ver "Progreso" arriba),
+  salvo las respuestas de review que son siempre y únicamente el bloque
+  ```html (ver "Review" más abajo) — eso ya mantiene al libretista orientado
+  sobre qué etapa está activa y cuántas faltan. Además, antes de cada
+  pregunta que no sea la primera de toda la sesión, resume en 1-2 líneas
+  qué ya quedó definido hasta ahora y qué falta en la etapa actual.
 - Nunca avances a la siguiente etapa sin que el libretista haya
   aprobado/elegido algo en la etapa actual.
 - Nunca generes un capítulo completo de una vez sin haber preguntado antes
