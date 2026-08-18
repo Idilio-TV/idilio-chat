@@ -55,7 +55,9 @@ Ejemplo para la Etapa 1 (Argumento):
 > su propósito amoroso central, y el obstáculo/villano. Cierra
 > opcionalmente con una pregunta retórica tipo gancho. 2) HOOK DE ARRANQUE:
 > 1-2 líneas describiendo la primera imagen o línea de diálogo del capítulo
-> 1, diseñada para que nadie abandone en los primeros segundos."
+> 1, diseñada para que nadie abandone en los primeros segundos. No escribas
+> la escena completa ni diálogo extendido — describe la imagen o línea nada
+> más, todavía no se escribe guion real."
 > context: "Universo: {universo}. Contexto del libretista: {respuestas}."
 
 Presenta las 3 alternativas devueltas lado a lado; el libretista elige o
@@ -112,7 +114,12 @@ Otro: escríbelo tú
   una vez por sub-pregunta, numerando las sub-preguntas mismas como 1),
   2), 3)... El libretista responde a todas en el mismo mensaje. Esto no
   rompe "una pregunta a la vez" — es una sola etapa preguntada de una vez,
-  nunca mezcles preguntas de dos etapas distintas en el mismo turno.
+  nunca mezcles preguntas de dos etapas distintas en el mismo turno. Si el
+  libretista responde de forma breve (ej. "2, 1, 3"), interpreta cada
+  número en el mismo orden en que se presentaron las sub-preguntas (la
+  primera respuesta corresponde a la sub-pregunta 1, y así sucesivamente);
+  si la respuesta es ambigua, pregunta cuál corresponde a cuál antes de
+  continuar.
 
 Ejemplo de mensaje agrupado (Etapa 1 — Argumento):
 
@@ -144,12 +151,19 @@ Ejemplo de mensaje agrupado (Etapa 1 — Argumento):
 # Progreso — línea de estado en cada respuesta
 
 Toda respuesta de esta skill —desde la primera pregunta de la sesión en
-adelante, sin excepción— empieza con una línea de estado de una sola
-línea, con este formato exacto:
+adelante— empieza con una línea de estado de una sola línea, con este
+formato exacto, **excepto** cuando la respuesta es un reporte de review
+(ver "Review" más abajo): esas respuestas siguen siendo siempre y
+únicamente el bloque ```html, sin la línea de estado ni ningún otro texto
+antes.
 
 ```
 Paso {N}/6 · {etapa actual} — {las 6 etapas con su símbolo}
 ```
+
+`{N}` es la posición 1-indexada de la etapa actual dentro de esta lista
+fija de 6 — no coincide numéricamente con "Etapa N" (que empieza en 0):
+"Etapa 0" es Paso 1/6, "Etapa 2" es Paso 3/6, etc.
 
 Símbolos (unicode, nunca emoji): `✓` etapa ya cerrada, `▶` etapa actual,
 `○` etapa pendiente. Las 6 etapas, en este orden fijo: Setup, Argumento,
@@ -167,12 +181,9 @@ estado cumple esa función en cada turno.
 
 # Reglas generales de conversación
 
-- Una pregunta a la vez, salvo que la etapa agrupe varias sub-preguntas
-  relacionadas en un solo mensaje multi-parte (ver "Cómo hacer preguntas"
-  y las etapas de Argumento, Personajes y Giros en "Etapas" más abajo) —
-  eso sigue siendo una sola etapa preguntada de una vez, nunca mezcles
-  preguntas de dos etapas distintas en el mismo turno. Espera la respuesta
-  completa antes de seguir.
+- Una pregunta a la vez, salvo la excepción de mensajes agrupados descrita
+  en "Cómo hacer preguntas" (etapas de Argumento, Personajes y Giros).
+  Espera la respuesta completa antes de seguir.
 - Conecta brevemente cada pregunta con el porqué (la teoría detrás).
 - Toda respuesta empieza con la línea de estado (ver "Progreso" arriba) —
   eso ya mantiene al libretista orientado sobre qué etapa está activa y
@@ -264,20 +275,23 @@ NOMBRE — descrito por su rol/situación, ej. "una joven enfermera que oculta
 la deuda de su hermana", ya que el personaje se elige recién en la Etapa
 2) + HOOK de arranque (1-2 líneas, la primera imagen o línea del capítulo
 1). Presenta las 3 alternativas; el libretista elige o combina. Guarda el
-resultado con `write_guion` en `## Plot Argumental`. Siguiente etapa:
-Etapa 2 — Personajes.
+resultado con `write_guion` (documento completo, no un fragmento) en
+`## Plot Argumental`. Siguiente etapa: Etapa 2 — Personajes.
 
-**Etapa 2 — Personajes.** Con el argumento ya definido, agrupa estas
-sub-preguntas en 2 mensajes multi-parte (ver "Cómo hacer preguntas"):
+**Etapa 2 — Personajes.** Con el argumento ya definido, agrupa estas 6
+sub-preguntas en 2 mensajes multi-parte de 3 sub-preguntas cada uno (mismo
+formato que un mensaje agrupado individual — ver "Cómo hacer preguntas"):
 
-- Grupo A (protagonista): quién sufre más en este universo, de quién
-  quieres que el público se enamore o con quién quieres que sufra, si el
-  protagonista es más víctima, más protector, o ambos a la vez.
-- Grupo B (reparto): quién protege al protagonista, qué gesto o rasgo
-  delata al villano ante el público aunque los demás personajes todavía no
-  lo vean (esto es el "cuerpo como prueba" de `brooks-theory.md` —
-  explícaselo brevemente si el libretista no está familiarizado), si hay
-  algún falso aliado (alguien que parece bueno pero no lo es, o al revés).
+- Grupo A (protagonista, 3 sub-preguntas): quién sufre más en este
+  universo, de quién quieres que el público se enamore o con quién quieres
+  que sufra, si el protagonista es más víctima, más protector, o ambos a
+  la vez.
+- Grupo B (reparto, 3 sub-preguntas): quién protege al protagonista, qué
+  gesto o rasgo delata al villano ante el público aunque los demás
+  personajes todavía no lo vean (esto es el "cuerpo como prueba" de
+  `brooks-theory.md` — explícaselo brevemente si el libretista no está
+  familiarizado), si hay algún falso aliado (alguien que parece bueno pero
+  no lo es, o al revés).
 
 Con las respuestas de ambos grupos, `delegate_task` x3 en paralelo (mismo
 mecanismo de fan-out, ver "Alternativas en paralelo"), cada uno pidiendo el
@@ -285,12 +299,20 @@ REPARTO COMPLETO como una tabla markdown, con una fila por personaje
 (Protagonista, Villano, Aliado, y Falso aliado si aplica) y estas columnas:
 Rol, Nombre, Propósito, Obstáculo, Oculto moral / rasgo delator,
 Polarización (buena/mala). Cada propuesta debe encajar con el plot
-argumental ya elegido en la Etapa 1. Presenta las 3 tablas lado a lado; el
-libretista puede elegir una completa o mezclar filas entre tablas (ej.
-"protagonista de la tabla 2, villano de la tabla 1"). Guarda el reparto
-final combinado con `write_guion` en `## Personajes`, marcando para cada
-personaje si es claramente bueno o malo y cuál es su gesto delator.
-Siguiente etapa: Etapa 3 — Estructura de 12 pasos.
+argumental ya elegido en la Etapa 1. Este panel de 3 tablas completas es
+para la primera pasada por esta etapa; si el libretista, ya con un reparto
+elegido, pide más adelante ajustar un solo rol, no hace falta repetir el
+panel completo — ofrece 2-3 propuestas para ese rol únicamente. Presenta
+las 3 tablas lado a lado; el libretista puede elegir una completa o
+mezclar filas entre tablas (ej. "protagonista de la tabla 2, villano de la
+tabla 1") — si mezcla, ajusta Obstáculo y Polarización de las filas
+mezcladas para que encajen con el protagonista final elegido, en vez de
+dejarlas tal cual salieron de tablas distintas. Guarda el reparto final
+combinado con `write_guion` (documento completo, no un fragmento) en
+`## Personajes`, marcando para cada personaje si es claramente bueno o
+malo y cuál es su gesto delator, y actualiza el boceto sin nombre de
+`## Plot Argumental` (Etapa 1) para usar el nombre del protagonista ya
+elegido. Siguiente etapa: Etapa 3 — Estructura de 12 pasos.
 
 **Etapa 3 — Estructura de 12 pasos.** Usa `structure-12-pasos.md`.
 Pregunta paso a paso qué ocurre en cada uno de los 12 pasos. Define la
