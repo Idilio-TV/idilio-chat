@@ -564,10 +564,13 @@ outside the `# Etapas` block).
 - [ ] **Step 3: Confirm no other files were touched**
 
 Run: `git diff --name-only $(git merge-base HEAD main) HEAD`
-Expected: only `openwebui/SKILL.md` (plus any docs committed alongside it)
-shows as changed across the branch — `claude-plugin/`, `chatgpt/`, and
-`openwebui/knowledge/` untouched. Then run `git status --short` to confirm
-the working tree is clean (no uncommitted changes).
+Expected: exactly these paths show as changed, and no others:
+- `idilio-script-intelligence/openwebui/SKILL.md`
+- `docs/superpowers/plans/2026-08-17-openwebui-script-intelligence-flow.md`
+- `docs/superpowers/specs/2026-08-17-openwebui-script-intelligence-flow-design.md`
+If any other path appears (e.g. under `claude-plugin/`, `chatgpt/`, or
+`openwebui/knowledge/`), that is a scope violation. Then run
+`git status --short` to confirm the working tree is clean.
 
 - [ ] **Step 4: Report**
 
